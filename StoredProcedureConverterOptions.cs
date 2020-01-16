@@ -18,6 +18,10 @@ namespace SQLServer_Stored_Procedure_Converter
 
         #region "Properties"
 
+        [Option("StoredProcFile", "Input", "I", HelpShowsDefault = false, IsInputFilePath = true,
+            HelpText = "File with SQL Server stored procedures to convert")]
+        public string SQLServerStoredProcedureFile { get; set; }
+
         [Option("OutputFile", "O", ArgPosition = 1, Required = true, HelpShowsDefault = false,
             HelpText = "Output file path")]
         public string OutputFilePath { get; set; }
@@ -25,10 +29,6 @@ namespace SQLServer_Stored_Procedure_Converter
         [Option("Schema", HelpShowsDefault = false,
             HelpText = "Schema to use for stored procedures")]
         public string SchemaName { get; set; } = "public";
-
-        [Option("StoredProcFile", "Input", "I", HelpShowsDefault = false, IsInputFilePath = true,
-            HelpText = "File with SQL Server stored procedures to convert")]
-        public string SQLServerStoredProcedureFile { get; set; }
 
         #endregion
 
