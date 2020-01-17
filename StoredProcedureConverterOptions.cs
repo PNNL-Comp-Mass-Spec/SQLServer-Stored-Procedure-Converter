@@ -18,11 +18,12 @@ namespace SQLServer_Stored_Procedure_Converter
 
         #region "Properties"
 
-        [Option("StoredProcFile", "Input", "I", HelpShowsDefault = false, IsInputFilePath = true,
+        [Option("StoredProcFile", "Input", "I", ArgPosition = 1, Required = true,
+            HelpShowsDefault = false, IsInputFilePath = true,
             HelpText = "File with SQL Server stored procedures to convert")]
         public string SQLServerStoredProcedureFile { get; set; }
 
-        [Option("OutputFile", "O", ArgPosition = 1, Required = true, HelpShowsDefault = false,
+        [Option("OutputFile", "O", ArgPosition = 2, HelpShowsDefault = false,
             HelpText = "Output file path")]
         public string OutputFilePath { get; set; }
 
