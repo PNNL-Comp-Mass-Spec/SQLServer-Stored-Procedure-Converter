@@ -90,7 +90,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 {
                     Console.WriteLine();
                     Console.WriteLine("Processing complete");
-                    Thread.Sleep(1500);
+                    Thread.Sleep(250);
                     return 0;
                 }
 
