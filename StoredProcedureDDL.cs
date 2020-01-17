@@ -5,6 +5,7 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     class StoredProcedureDDL
     {
+        public bool IsFunction { get; private set; }
 
         public List<string> LocalVariablesToDeclare { get; }
 
@@ -14,10 +15,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
         public List<string> ProcedureCommentBlock { get; }
 
-
         public string ProcedureName { get; private set; }
-
-
 
         /// <summary>
         /// Constructor
@@ -35,10 +33,12 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Clear all cached data
         /// </summary>
-        /// <param name="procedureName"></param>
-        public void Reset(string procedureName)
+        /// <param name="procedureName">Procedure or function name</param>
+        /// <param name="isFunction">True if this DDL is for a function; false for a stored procedure</param>
+        public void Reset(string procedureName, bool isFunction = false)
         {
             ProcedureName = procedureName;
+            IsFunction = isFunction;
 
             LocalVariablesToDeclare.Clear();
             ProcedureArguments.Clear();
@@ -52,7 +52,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <param name="writer"></param>
         public void ToWriterForPostgres(StreamWriter writer)
         {
-            if (ProcedureBody.Count == 0)
+            if (string.IsNullOrWhiteSpace(ProcedureName) || ProcedureBody.Count == 0)
                 return;
 
             writer.WriteLine();
@@ -77,9 +77,10 @@ namespace SQLServer_Stored_Procedure_Converter
             writer.WriteLine("LANGUAGE plpgsql");
             writer.WriteLine("AS $$");
 
-            foreach (var item in ProcedureArguments)
+            // The comment block must appear after $$, otherwise it will be discarded (and not associated with the procedure)
+            foreach (var item in ProcedureCommentBlock)
             {
-                writer.WriteLine("    " + item);
+                writer.WriteLine(item);
             }
 
             if (LocalVariablesToDeclare.Count > 0)
@@ -92,6 +93,7 @@ namespace SQLServer_Stored_Procedure_Converter
             }
 
             writer.WriteLine("BEGIN");
+
             foreach (var item in ProcedureBody)
             {
                 writer.WriteLine(item);
