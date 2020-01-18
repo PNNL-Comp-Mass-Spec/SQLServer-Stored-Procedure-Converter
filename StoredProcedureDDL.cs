@@ -5,16 +5,37 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     class StoredProcedureDDL
     {
+        /// <summary>
+        /// True if a function, false if a stored procedure
+        /// </summary>
         public bool IsFunction { get; private set; }
 
+        /// <summary>
+        /// Local variables defined in the procedure
+        /// </summary>
         public List<string> LocalVariablesToDeclare { get; }
 
+        /// <summary>
+        /// List of arguments for the procedure
+        /// </summary>
         public List<string> ProcedureArguments { get; }
 
+        /// <summary>
+        /// Main body of the procedure
+        /// </summary>
         public List<string> ProcedureBody { get; }
 
+        /// <summary>
+        /// Comment block
+        /// </summary>
+        /// <remarks>
+        /// Inserted between the AS and DECLARE keywords
+        /// </remarks>
         public List<string> ProcedureCommentBlock { get; }
 
+        /// <summary>
+        /// Procedure name
+        /// </summary>
         public string ProcedureName { get; private set; }
 
         /// <summary>
