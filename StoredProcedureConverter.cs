@@ -770,7 +770,15 @@ namespace SQLServer_Stored_Procedure_Converter
             var labelMatch = mCommentBlockLabelMatcher.Match(dataLine);
             if (!labelMatch.Success)
             {
-                storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
+                if (dataLine.StartsWith("**\t") && dataLine.Length > 3)
+                {
+                    storedProcedureInfo.ProcedureCommentBlock.Add("**  " + ReplaceTabs(dataLine.Substring(3)));
+                }
+                else
+                {
+                    storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
+                }
+
                 return;
             }
 
