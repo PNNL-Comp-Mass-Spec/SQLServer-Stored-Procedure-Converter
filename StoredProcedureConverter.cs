@@ -357,6 +357,21 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock)
                         {
+                            if (dataLine.IndexOf("Return values: 0: success, otherwise, error code", StringComparison.OrdinalIgnoreCase) > 0 ||
+                                dataLine.IndexOf("Return values: 0 if no error; otherwise error code", StringComparison.OrdinalIgnoreCase) > 0)
+                            {
+                                // Skip this line that we traditionally have included as boilerplate
+                                ReadAndCacheLines(reader, cachedLines, 1);
+                                if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
+                                {
+                                    // The next line is just "**"
+                                    // Skip it too
+                                    cachedLines.Dequeue();
+                                }
+
+                                continue;
+                            }
+
                             StoreProcedureCommentLine(storedProcedureInfo, dataLine);
                             continue;
                         }
