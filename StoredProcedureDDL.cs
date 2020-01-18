@@ -21,6 +21,15 @@ namespace SQLServer_Stored_Procedure_Converter
         public List<string> ProcedureArguments { get; }
 
         /// <summary>
+        /// Comments associated with the procedure arguments
+        /// Keys are the argument name, values are the comment (without --)
+        /// </summary>
+        /// <remarks>
+        /// This comments will be added to the procedure comment block
+        /// </remarks>
+        public List<KeyValuePair<string, string>> ProcedureArgumentComments { get; }
+
+        /// <summary>
         /// Main body of the procedure
         /// </summary>
         public List<string> ProcedureBody { get; }
@@ -45,6 +54,7 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             LocalVariablesToDeclare = new List<string>();
             ProcedureArguments = new List<string>();
+            ProcedureArgumentComments = new List<KeyValuePair<string, string>>();
             ProcedureBody = new List<string>();
             ProcedureCommentBlock = new List<string>();
 
@@ -63,6 +73,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             LocalVariablesToDeclare.Clear();
             ProcedureArguments.Clear();
+            ProcedureArgumentComments.Clear();
             ProcedureBody.Clear();
             ProcedureCommentBlock.Clear();
         }
@@ -98,10 +109,23 @@ namespace SQLServer_Stored_Procedure_Converter
             writer.WriteLine("LANGUAGE plpgsql");
             writer.WriteLine("AS $$");
 
-            // The comment block must appear after $$, otherwise it will be discarded (and not associated with the procedure)
+            // The procedure comment block must appear after $$, otherwise it will be discarded (and not associated with the procedure)
+            var argumentCommentsAdded = false;
             foreach (var item in ProcedureCommentBlock)
             {
+                if (item.EndsWith("********/") && ProcedureArgumentComments.Count > 0)
+                {
+                    WriteArgumentComments(writer);
+                    argumentCommentsAdded = true;
+                }
                 writer.WriteLine(item);
+            }
+
+            if (ProcedureArgumentComments.Count > 0 && !argumentCommentsAdded)
+            {
+                writer.WriteLine("/******************");
+                WriteArgumentComments(writer);
+                writer.WriteLine("******************/");
             }
 
             if (LocalVariablesToDeclare.Count > 0)
@@ -122,6 +146,19 @@ namespace SQLServer_Stored_Procedure_Converter
 
             writer.WriteLine("END");
             writer.WriteLine("$$;");
+        }
+
+        private void WriteArgumentComments(TextWriter writer)
+        {
+            if (ProcedureArgumentComments.Count == 0)
+                return;
+
+            writer.WriteLine("**  Arguments:");
+            foreach (var argumentComment in ProcedureArgumentComments)
+            {
+                writer.WriteLine("**    {0,-25} {1}", argumentComment.Key, argumentComment.Value);
+            }
+            writer.WriteLine("**");
         }
     }
 }

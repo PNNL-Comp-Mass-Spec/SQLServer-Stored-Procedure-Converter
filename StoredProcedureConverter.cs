@@ -102,6 +102,14 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
+        /// This is used to find a SQL Server variable name (starts with @)
+        /// </summary>
+        private readonly Regex mVariableNameMatcher = new Regex(
+            @"(?<VariableName>@[^\s]+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+
+        /// <summary>
         /// Options
         /// </summary>
         private readonly StoredProcedureConverterOptions mOptions;
@@ -706,6 +714,21 @@ namespace SQLServer_Stored_Procedure_Converter
             if (string.IsNullOrWhiteSpace(dataLine))
                 return;
 
+            var argumentNameMatch = mVariableNameMatcher.Match(dataLine);
+
+            string argumentName;
+
+            if (argumentNameMatch.Success)
+            {
+                var argumentNameSqlServer = argumentNameMatch.Groups["VariableName"].Value;
+                argumentName = UpdateVariablePrefix(argumentNameSqlServer);
+            }
+            else
+            {
+                // This shouldn't normally happen
+                argumentName = dataLine;
+            }
+
             var updatedArgumentLine = UpdateVariablePrefix(dataLine).Trim();
             if (updatedArgumentLine.IndexOf("varchar", StringComparison.OrdinalIgnoreCase) > 0)
             {
@@ -720,6 +743,20 @@ namespace SQLServer_Stored_Procedure_Converter
             else if (updatedArgumentLine.EndsWith("output"))
             {
                 updatedArgumentLine = "OUT " + updatedArgumentLine.Substring(0, updatedArgumentLine.Length - "output".Length).Trim();
+            }
+
+            // Look for a comment after the argument declaration
+            var commentIndex = updatedArgumentLine.IndexOf("--", StringComparison.Ordinal);
+            if (commentIndex > 0 && commentIndex < updatedArgumentLine.Length - 1)
+            {
+                // When extracting the comment, do not include the leading "--"
+                var argumentComment = updatedArgumentLine.Substring(commentIndex + 2).Trim();
+
+                var argumentNameAndComment = new KeyValuePair<string, string>(argumentName, argumentComment);
+
+                storedProcedureInfo.ProcedureArgumentComments.Add(argumentNameAndComment);
+
+                updatedArgumentLine = updatedArgumentLine.Substring(0, commentIndex).Trim();
             }
 
             storedProcedureInfo.ProcedureArguments.Add(ReplaceTabs(updatedArgumentLine));
