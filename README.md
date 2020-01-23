@@ -12,6 +12,8 @@ SQLServer_Stored_Procedure_Converter.exe
   /I:InputFilePath
   /O:OutputFilePath
   [/Schema:SchemaName]
+  [/Map:NameMapFile.txt]
+  [/SkipList:StoredProcedureSkipiList]
   [/ParamFile:ParamFileName.conf] [/CreateParamFile]
 ```
 
@@ -20,6 +22,32 @@ The input file should be a SQL text file with CREATE PROCEDURE statements
 Optionally use `/O` to specify the output file path
 
 Use `/Schema` to specify schema name prefix procedure names with
+
+The `/Map` file is is a tab-delimited text file with five columns
+* The Map file matches the format of the merged NameMap file created by the PgSQL View Creator Helper (https://github.com/PNNL-Comp-Mass-Spec/PgSQL-View-Creator-Helper)
+* It also matches the file created by sqlserver2pgsql (https://github.com/PNNL-Comp-Mass-Spec/sqlserver2pgsql)
+* Example data:
+
+| SourceTable   | SourceName           | Schema | NewTable        | NewName               |
+|---------------|----------------------|--------|-----------------|-----------------------|
+| T_Log_Entries | Entry_ID             | mc     | t_log_entries   | entry_id              |
+| T_Log_Entries | posted_by            | mc     | t_log_entries   | posted_by             |
+| T_Log_Entries | posting_time         | mc     | t_log_entries   | posting_time          |
+| T_Log_Entries | type                 | mc     | t_log_entries   | type                  |
+| T_Log_Entries | message              | mc     | t_log_entries   | message               |
+| T_Log_Entries | Entered_By           | mc     | t_log_entries   | entered_by            |
+| T_Mgrs        | m_id                 | mc     | t_mgrs          | m_id                  |
+| T_Mgrs        | m_name               | mc     | t_mgrs          | m_name                |
+| T_Mgrs        | mgr_type_id          | mc     | t_mgrs          | mgr_type_id           |
+| T_Mgrs        | param_value_changed  | mc     | t_mgrs          | param_value_changed   |
+| T_Mgrs        | control_from_website | mc     | t_mgrs          | control_from_website  |
+| T_Mgrs        | comment              | mc     | t_mgrs          | comment               |
+| T_Mgrs        | M_TypeID             | mc     | t_mgrs          | mgr_type_id           |
+| T_Mgrs        | M_ParmValueChanged   | mc     | t_mgrs          | param_value_changed   |
+| T_Mgrs        | M_ControlFromWebsite | mc     | t_mgrs          | control_from_website  |
+| T_Mgrs        | M_Comment            | mc     | t_mgrs          | comment               |
+
+Use `/SkipList` or `/StoredProceduresToSkip` to define a comma separated list of stored procedures to skip while parsing the input file
 
 The processing options can be specified in a parameter file using `/ParamFile:Options.conf` or `/Conf:Options.conf`
 * Define options using the format `ArgumentName=Value`
