@@ -47,7 +47,7 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// This finds leading whitespace
+        /// This finds leading whitespace (spaces and tabs)
         /// </summary>
         private readonly Regex mLeadingWhitespaceMatcher = new Regex(@"^\s+", RegexOptions.Compiled);
 
@@ -115,7 +115,6 @@ namespace SQLServer_Stored_Procedure_Converter
         private readonly Regex mVariableNameMatcher = new Regex(
             @"(?<VariableName>@[^\s]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
 
         /// <summary>
         /// Options
@@ -248,6 +247,18 @@ namespace SQLServer_Stored_Procedure_Converter
             return !match.Success ? string.Empty : match.Value;
         }
 
+        private string GetNameWithoutSchema(string objectName)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
+                return string.Empty;
+
+            var periodIndex = objectName.IndexOf('.');
+            if (periodIndex > 0 && periodIndex < objectName.Length - 1)
+                return objectName.Substring(periodIndex + 1);
+
+            return objectName;
+
+        }
 
         /// <summary>
         /// Return true if the line is whitespace, or starts with --, Begin, If, or Else
@@ -464,13 +475,24 @@ namespace SQLServer_Stored_Procedure_Converter
                         {
                             if (!string.IsNullOrWhiteSpace(storedProcedureInfo.ProcedureName))
                             {
-                                if (storedProcedureInfo.IsFunction)
-                                    OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
+                                var procedureNameWithoutSchema = GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
+                                if (mOptions.StoredProcedureNamesToSkip.Contains(procedureNameWithoutSchema))
+                                {
+                                    OnStatusEvent("Skipping " + storedProcedureInfo.ProcedureName);
+                                }
                                 else
-                                    OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
+                                {
 
-                                // Write out the the previous procedure (or function)
-                                storedProcedureInfo.ToWriterForPostgres(writer);
+                                    if (storedProcedureInfo.IsFunction)
+                                        OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
+                                    else
+                                        OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
+
+                                    UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap);
+
+                                    // Write out the the previous procedure (or function)
+                                    storedProcedureInfo.ToWriterForPostgres(writer);
+                                }
                             }
 
                             // Reset the tracking variables

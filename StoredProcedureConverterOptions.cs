@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using PRISM;
@@ -12,7 +13,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "January 17, 2020";
+        public const string PROGRAM_DATE = "January 23, 2020";
 
         #endregion
 
@@ -35,6 +36,30 @@ namespace SQLServer_Stored_Procedure_Converter
             HelpText = "Column name map file (typically created by sqlserver2pgsql.pl); tab-delimited file with five columns:\n" +
                        "SourceTable  SourceName  Schema  NewTable  NewName")]
         public string ColumnNameMapFile { get; set; }
+
+        /// <summary>
+        /// List of stored procedures to skip when converting the source file
+        /// </summary>
+        public SortedSet<string> StoredProcedureNamesToSkip { get; } = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        [Option("StoredProceduresToSkip", "SkipList", HelpShowsDefault = false,
+            HelpText = "Comma separated list of stored procedure names to skip while converting the source file")]
+        // ReSharper disable once UnusedMember.Global
+        public string StoredProceduresToSkip
+        {
+            get => string.Join(", ", StoredProcedureNamesToSkip);
+            set
+            {
+                StoredProcedureNamesToSkip.Clear();
+                if (string.IsNullOrWhiteSpace(value))
+                    return;
+
+                foreach (var item in value.Split(','))
+                {
+                    StoredProcedureNamesToSkip.Add(item.Trim());
+                }
+            }
+        }
 
         #endregion
 
