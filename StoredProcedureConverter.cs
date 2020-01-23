@@ -1068,13 +1068,14 @@ namespace SQLServer_Stored_Procedure_Converter
                 updatedArgumentLine = VarcharToText(updatedArgumentLine);
             }
 
+            // Note that PostgreSQL 11 and 12 support IN or INOUT variables; not OUT variables
             if (updatedArgumentLine.IndexOf(" output,", StringComparison.OrdinalIgnoreCase) > 0)
             {
-                updatedArgumentLine = "OUT " + updatedArgumentLine.Replace(" output,", ",").Trim();
+                updatedArgumentLine = "INOUT " + updatedArgumentLine.Replace(" output,", ",").Trim();
             }
             else if (updatedArgumentLine.EndsWith("output"))
             {
-                updatedArgumentLine = "OUT " + updatedArgumentLine.Substring(0, updatedArgumentLine.Length - "output".Length).Trim();
+                updatedArgumentLine = "INOUT " + updatedArgumentLine.Substring(0, updatedArgumentLine.Length - "output".Length).Trim();
             }
 
             // Look for a comment after the argument declaration
