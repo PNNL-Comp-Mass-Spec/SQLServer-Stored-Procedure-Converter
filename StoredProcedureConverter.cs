@@ -160,6 +160,60 @@ namespace SQLServer_Stored_Procedure_Converter
             return !match.Success ? string.Empty : match.Value;
         }
 
+
+        /// <summary>
+        /// Load the column name map file, if defined
+        /// It is a tab-delimited file with five columns, created by sqlserver2pgsql.pl or by the PgSqlViewCreatorHelper
+        /// Columns:
+        /// SourceTable  SourceName  Schema  NewTable  NewName
+        /// </summary>
+        /// <param name="tableNameMap">
+        /// Dictionary where keys are the original (source) table names
+        /// and values are WordReplacer classes that track the new table names and new column names in PostgreSQL
+        /// </param>
+        /// <param name="columnNameMap">
+        /// Dictionary where keys are new table names
+        /// and values are a Dictionary of mappings of original column names to new column names in PostgreSQL;
+        /// names should not have double quotes around them
+        /// </param>
+        /// <returns></returns>
+        private bool LoadColumnNameMapFile(
+            out Dictionary<string, WordReplacer> tableNameMap,
+            out Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap)
+        {
+
+
+            if (string.IsNullOrWhiteSpace(mOptions.ColumnNameMapFile))
+            {
+                tableNameMap = new Dictionary<string, WordReplacer>();
+                columnNameMap = new Dictionary<string, Dictionary<string, WordReplacer>>();
+                return true;
+            }
+
+            var mapFile = new FileInfo(mOptions.ColumnNameMapFile);
+            if (!mapFile.Exists)
+            {
+                OnErrorEvent("Column name map file not found: " + mapFile.FullName);
+                tableNameMap = new Dictionary<string, WordReplacer>();
+                columnNameMap = new Dictionary<string, Dictionary<string, WordReplacer>>();
+                return false;
+            }
+
+            var mapReader = new NameMapReader();
+            RegisterEvents(mapReader);
+
+            var defaultSchema = "public";
+
+            var mapFileLoaded = mapReader.LoadSqlServerToPgSqlColumnMapFile(
+                mapFile,
+                defaultSchema,
+                false,
+                out tableNameMap,
+                out columnNameMap);
+
+            return mapFileLoaded;
+        }
+
         public bool ProcessFile(string inputFilePath)
         {
             try
@@ -248,6 +302,11 @@ namespace SQLServer_Stored_Procedure_Converter
                 var selectAssignVariableMatcher = new Regex(
                     @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=(?<SourceColumn>.+)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                var mapFileSuccess = LoadColumnNameMapFile(out var tableNameMap, out var columnNameMap);
+
+                if (!mapFileSuccess)
+                    return false;
 
                 // Define the schema name
                 var schemaName = string.IsNullOrWhiteSpace(mOptions.SchemaName) ? "public" : mOptions.SchemaName;

@@ -31,6 +31,11 @@ namespace SQLServer_Stored_Procedure_Converter
             HelpText = "Schema to use for stored procedures")]
         public string SchemaName { get; set; } = "public";
 
+        [Option("Map", "M", HelpShowsDefault = false, IsInputFilePath = true,
+            HelpText = "Column name map file (typically created by sqlserver2pgsql.pl); tab-delimited file with five columns:\n" +
+                       "SourceTable  SourceName  Schema  NewTable  NewName")]
+        public string ColumnNameMapFile { get; set; }
+
         #endregion
 
         /// <summary>
@@ -38,9 +43,9 @@ namespace SQLServer_Stored_Procedure_Converter
         /// </summary>
         public StoredProcedureConverterOptions()
         {
-            OutputFilePath = string.Empty;
-
             SQLServerStoredProcedureFile = string.Empty;
+            OutputFilePath = string.Empty;
+            ColumnNameMapFile = string.Empty;
         }
 
         /// <summary>
@@ -62,13 +67,18 @@ namespace SQLServer_Stored_Procedure_Converter
             Console.WriteLine("Options:");
             Console.WriteLine();
 
-            Console.WriteLine(" {0,-48} {1}", "Input file with stored procedures:", SQLServerStoredProcedureFile);
+            Console.WriteLine(" {0,-35} {1}", "Input file with stored procedures:", PathUtils.CompactPathString(SQLServerStoredProcedureFile, 80));
 
-            Console.WriteLine(" {0,-48} {1}", "Output file path:", OutputFilePath);
+            Console.WriteLine(" {0,-35} {1}", "Output file path:", PathUtils.CompactPathString(OutputFilePath, 80));
 
             if (!string.IsNullOrWhiteSpace(SchemaName))
             {
-                Console.WriteLine(" {0,-48} {1}", "Schema name:", SchemaName);
+                Console.WriteLine(" {0,-35} {1}", "Schema name:", SchemaName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(ColumnNameMapFile))
+            {
+                Console.WriteLine(" {0,-35} {1}", "Column name map file:", PathUtils.CompactPathString(ColumnNameMapFile, 80));
             }
 
             Console.WriteLine();
