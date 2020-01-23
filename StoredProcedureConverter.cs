@@ -1170,18 +1170,24 @@ namespace SQLServer_Stored_Procedure_Converter
                 dataLine = mCharIndexUpdater.Replace(dataLine, updatedFunctionCall);
             }
 
-            if (dataLine.Contains("Convert("))
-                Console.WriteLine("Check this code");
-
-            var convertMatch = mConvertDataTypeUpdater.Match(dataLine);
-            if (convertMatch.Success)
+            while (true)
             {
-                var dataType = VarcharToText(convertMatch.Groups["DataType"].Value);
-                var variableName = convertMatch.Groups["VariableName"].Value;
+                // The data line might have multiple instances of text like "Convert(varchar(12), @sourceVariable)"
+                // Replace them one at a time
+                var convertMatch = mConvertDataTypeUpdater.Match(dataLine);
+                if (convertMatch.Success)
+                {
+                    var dataType = VarcharToText(convertMatch.Groups["DataType"].Value);
+                    var variableName = convertMatch.Groups["VariableName"].Value;
 
-                var castCommand = string.Format("_{0}::{1}", variableName, dataType);
+                    var castCommand = string.Format("_{0}::{1}", variableName, dataType);
 
-                dataLine = mConvertDataTypeUpdater.Replace(dataLine, castCommand);
+                    dataLine = mConvertDataTypeUpdater.Replace(dataLine, castCommand, 1);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return dataLine;
