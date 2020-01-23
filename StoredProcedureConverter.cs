@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using PRISM;
+using TableColumnNameMapContainer;
 
 namespace SQLServer_Stored_Procedure_Converter
 {
@@ -20,6 +21,13 @@ namespace SQLServer_Stored_Procedure_Converter
         #endregion
 
         #region "Member variables"
+
+        /// <summary>
+        /// This is used when backtracking and forward tracking to find lines of code that should be processed as a block
+        /// </summary>
+        private static readonly Regex mBlockBoundaryMatcher = new Regex(
+            @"^\s*(Begin|End|If|Else)\b",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This is used to match Desc, Auth, or Date keywords in a comment block
@@ -154,12 +162,97 @@ namespace SQLServer_Stored_Procedure_Converter
             AppendLine(procedureBody, leadingWhitespace + dataLine.Substring(commentIndex));
         }
 
+        /// <summary>
+        /// Examine the cached lines to find lines of code related to the line at the given index
+        /// </summary>
+        /// <param name="cachedLines">Cached SQL code</param>
+        /// <param name="index">Index in cachedLines to start at when finding the lines to add to the block</param>
+        /// <param name="updatedLineIndices">
+        /// Tracks the indexes of lines that have been updated;
+        /// this is used to assure we don't backtrack into a region that has already been processed
+        /// </param>
+        /// <param name="blockStartIndex">The index in cachedLines of the first line in the returned block of text</param>
+        /// <returns>Lines of related SQL code, adjacent to the line at cachedLines[index]</returns>
+        private List<string> FindCurrentBlock(
+            IReadOnlyList<string> cachedLines,
+            int index,
+            IEnumerable<int> updatedLineIndices,
+            out int blockStartIndex)
+        {
+            // Backtrack to find the start of this block
+            blockStartIndex = index;
+            var blockEndIndex = index;
+
+            var minimumIndex = Math.Max(0, updatedLineIndices.LastOrDefault());
+
+            var onlyIncludeCommentLines = cachedLines[index].Trim().StartsWith("--");
+
+            while (blockStartIndex > minimumIndex)
+            {
+                var previousLine = cachedLines[blockStartIndex - 1].Trim();
+
+                if (onlyIncludeCommentLines)
+                {
+                    if (!previousLine.Trim().StartsWith("--"))
+                        break;
+                }
+                else
+                {
+                    if (IsBlockBoundary(previousLine))
+                        break;
+                }
+
+                blockStartIndex--;
+            }
+
+            // Forward track to find the end of this block
+            var stopEndIndex = cachedLines.Count - 1;
+            while (blockEndIndex < stopEndIndex)
+            {
+                var nextLine = cachedLines[blockEndIndex + 1].Trim();
+
+                if (onlyIncludeCommentLines)
+                {
+                    if (!nextLine.Trim().StartsWith("--"))
+                        break;
+                }
+                else
+                {
+                    if (IsBlockBoundary(nextLine))
+                        break;
+                }
+
+                blockEndIndex++;
+            }
+
+            var currentBlock = new List<string>();
+            for (var i = blockStartIndex; i <= blockEndIndex; i++)
+            {
+                currentBlock.Add(cachedLines[i]);
+            }
+
+            return currentBlock;
+        }
+
         private string GetLeadingWhitespace(string dataLine)
         {
             var match = mLeadingWhitespaceMatcher.Match(dataLine);
             return !match.Success ? string.Empty : match.Value;
         }
 
+
+        /// <summary>
+        /// Return true if the line is whitespace, or starts with --, Begin, If, or Else
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <returns></returns>
+        private static bool IsBlockBoundary(string dataLine)
+        {
+            return
+                string.IsNullOrWhiteSpace(dataLine) ||
+                dataLine.StartsWith("--") ||
+                mBlockBoundaryMatcher.IsMatch(dataLine);
+        }
 
         /// <summary>
         /// Load the column name map file, if defined
@@ -655,6 +748,72 @@ namespace SQLServer_Stored_Procedure_Converter
             }
         }
 
+        /// <summary>
+        /// Looks for table names in cachedLines, then uses that information to update column names
+        /// </summary>
+        /// <param name="cachedLines"></param>
+        /// <param name="tableNameMap">
+        /// Dictionary where keys are the original (source) table names
+        /// and values are WordReplacer classes that track the new table names and new column names in PostgreSQL
+        /// </param>
+        /// <param name="columnNameMap">
+        /// Dictionary where keys are new table names
+        /// and values are a Dictionary of mappings of original column names to new column names in PostgreSQL;
+        /// names should not have double quotes around them
+        /// </param>
+        private void UpdateTableAndColumnNames(
+            List<string> cachedLines,
+            Dictionary<string, WordReplacer> tableNameMap,
+            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap)
+        {
+            var tablesInLine = new List<string>();
+            var updatedLineIndices = new SortedSet<int>();
+
+            var index = 0;
+            while (index < cachedLines.Count)
+            {
+                var matchFound = FindTablesByName(tableNameMap, cachedLines[index], tablesInLine);
+
+                if (!matchFound)
+                {
+                    index++;
+                    continue;
+                }
+
+                var currentBlock = FindCurrentBlock(cachedLines, index, updatedLineIndices, out var blockStartIndex);
+
+                var updatedBlock = ReplaceNamesInBlock(tableNameMap, columnNameMap, currentBlock);
+
+                for (var i = 0; i < updatedBlock.Count; i++)
+                {
+                    var targetIndex = blockStartIndex + i;
+                    updatedLineIndices.Add(targetIndex);
+
+                    cachedLines[targetIndex] = updatedBlock[i];
+                }
+
+                index = blockStartIndex + updatedBlock.Count;
+            }
+
+        }
+
+        private bool FindTablesByName(
+            Dictionary<string, WordReplacer> tableNameMap,
+            string dataLine,
+            ICollection<string> tablesInLine
+        )
+        {
+            tablesInLine.Clear();
+
+            foreach (var item in tableNameMap.Keys)
+            {
+                if (dataLine.IndexOf(item, StringComparison.OrdinalIgnoreCase) > 0)
+                    tablesInLine.Add(item);
+            }
+
+            return tablesInLine.Count > 0;
+        }
+
         private bool NextCachedLineIsBegin(Queue<string> cachedLines, ICollection<string> procedureBody, Stack<ControlBlockTypes> controlBlockStack)
         {
             if (cachedLines.Count == 0)
@@ -718,6 +877,50 @@ namespace SQLServer_Stored_Procedure_Converter
                 commentText);
 
             return updatedLine;
+        }
+
+        private List<string> ReplaceNamesInBlock(
+            IReadOnlyDictionary<string, WordReplacer> tableNameMap,
+            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap,
+            IReadOnlyList<string> currentBlock)
+        {
+            // Step through the columns loaded from the merged ColumnNameMap.txt file
+
+            var updatedLines = new List<string>();
+
+            var referencedTables = new SortedSet<string>();
+
+            foreach (var dataLine in currentBlock)
+            {
+                var updatedLine = NameUpdater.FindAndUpdateTableNames(tableNameMap, referencedTables, dataLine, false);
+
+                updatedLines.Add(updatedLine);
+            }
+
+            var blockUpdated = false;
+
+            // Look for column names in updatedLines, updating as appropriate
+            for (var i = 0; i < updatedLines.Count; i++)
+            {
+                var dataLine = updatedLines[i];
+
+                var workingCopy = NameUpdater.UpdateColumnNames(columnNameMap, referencedTables, dataLine, false);
+
+                if (currentBlock[i].Equals(workingCopy))
+                {
+                    continue;
+                }
+
+                blockUpdated = true;
+                updatedLines[i] = workingCopy;
+            }
+
+            if (blockUpdated)
+            {
+                OnDebugEvent("Updated block:\n    " + string.Join("\n    ", updatedLines));
+            }
+
+            return updatedLines;
         }
 
         /// <summary>
