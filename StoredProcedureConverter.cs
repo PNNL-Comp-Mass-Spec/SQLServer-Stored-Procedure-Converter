@@ -554,6 +554,23 @@ namespace SQLServer_Stored_Procedure_Converter
                                 continue;
                             }
 
+                            if (dataLine.IndexOf("Parameters:", StringComparison.OrdinalIgnoreCase) > 1) 
+                            {
+                                // Skip lines of the form "**  Parameters:" if the next line is blank
+                                var lineAfterAsterisks = dataLine.Substring(2).Trim();
+                                if (lineAfterAsterisks.Equals("Parameters:", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    ReadAndCacheLines(reader, cachedLines, 1);
+                                    if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
+                                    {
+                                        // The next line is just "**"
+                                        // Skip this line and the next one
+                                        cachedLines.Dequeue();
+                                        continue;
+                                    }
+                                }
+                            }
+
                             StoreProcedureCommentLine(storedProcedureInfo, dataLine);
                             continue;
                         }
