@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace SQLServer_Stored_Procedure_Converter
@@ -113,10 +114,19 @@ namespace SQLServer_Stored_Procedure_Converter
             var argumentCommentsAdded = false;
             foreach (var item in ProcedureCommentBlock)
             {
-                if (item.EndsWith("********/") && ProcedureArgumentComments.Count > 0)
+                if (ProcedureArgumentComments.Count > 0)
                 {
-                    WriteArgumentComments(writer);
-                    argumentCommentsAdded = true;
+
+                    if (item.StartsWith("**  Auth:"))
+                    {
+                        WriteArgumentComments(writer);
+                        argumentCommentsAdded = true;
+                    }
+                    else if (!argumentCommentsAdded && item.EndsWith("********/"))
+                    {
+                        WriteArgumentComments(writer);
+                        argumentCommentsAdded = true;
+                    }
                 }
                 writer.WriteLine(item);
             }
@@ -153,10 +163,22 @@ namespace SQLServer_Stored_Procedure_Converter
             if (ProcedureArgumentComments.Count == 0)
                 return;
 
-            writer.WriteLine("**  Arguments:");
+            // Find the longest argument name
+            var maxArgNameLength = 0;
             foreach (var argumentComment in ProcedureArgumentComments)
             {
-                writer.WriteLine("**    {0,-25} {1}", argumentComment.Key, argumentComment.Value);
+                maxArgNameLength = Math.Max(maxArgNameLength, argumentComment.Key.Length);
+            }
+
+            writer.WriteLine("**  Arguments:");
+
+            // Format string will be of the form
+            // "**    {0,-12} {1}"
+            var formatString = string.Format("**    {{0,-{0}}} {{1}}", maxArgNameLength + 2);
+
+            foreach (var argumentComment in ProcedureArgumentComments)
+            {
+                writer.WriteLine(formatString, argumentComment.Key, argumentComment.Value);
             }
             writer.WriteLine("**");
         }
