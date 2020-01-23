@@ -140,7 +140,15 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <param name="dataLine"></param>
         private void AppendLine(ICollection<string> procedureBody, string dataLine)
         {
-            procedureBody.Add(ReplaceTabs(dataLine));
+            var updatedLine = ReplaceTabs(dataLine);
+            if (string.IsNullOrWhiteSpace(updatedLine) &&
+                string.IsNullOrWhiteSpace(procedureBody.LastOrDefault()))
+            {
+                // Prevent two blank lines in a row
+                return;
+            }
+
+            procedureBody.Add(updatedLine);
         }
 
         /// <summary>
