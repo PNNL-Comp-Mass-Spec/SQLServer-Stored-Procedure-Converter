@@ -780,6 +780,14 @@ namespace SQLServer_Stored_Procedure_Converter
                             continue;
                         }
 
+                        if (trimmedLine.StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var leadingWhitespace = GetLeadingWhitespace(dataLine);
+                            var updatedLine = "Call " + trimmedLine.Substring("exec ".Length);
+                            AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
+                            continue;
+                        }
+
                         // Normal line of code (or whitespace); append it to the body
                         UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
                     }
