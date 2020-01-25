@@ -1170,10 +1170,10 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             var updatedVariableName = "_" + selectAssignVariableMatch.Groups["VariableName"].Value;
 
-            var updatedLine = string.Format("{0}PERFORM {1} ={2}",
+            var updatedLine = string.Format("{0}SELECT {1} INTO {2}",
                 selectAssignVariableMatch.Groups["LeadingWhitespace"].Value,
-                updatedVariableName,
-                selectAssignVariableMatch.Groups["SourceColumn"].Value
+                selectAssignVariableMatch.Groups["SourceColumn"].Value,
+                updatedVariableName
                 );
 
             AppendLine(procedureBody, updatedLine);
