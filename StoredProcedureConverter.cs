@@ -432,6 +432,12 @@ namespace SQLServer_Stored_Procedure_Converter
                 // This queue tracks lines read from the input file; it is first in, first out (FIFO)
                 var cachedLines = new Queue<string>();
 
+                bool updateSchemaOnTables;
+                if (string.IsNullOrWhiteSpace(mOptions.SchemaName) || mOptions.SchemaName.Equals("public", StringComparison.OrdinalIgnoreCase))
+                    updateSchemaOnTables = false;
+                else
+                    updateSchemaOnTables = true;
+
                 var skipNextLineIfGo = false;
                 var insideDateBlock = false;
 
@@ -489,7 +495,7 @@ namespace SQLServer_Stored_Procedure_Converter
                                     else
                                         OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
 
-                                    UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap);
+                                    UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap, updateSchemaOnTables);
 
                                     // Write out the the previous procedure (or function)
                                     storedProcedureInfo.ToWriterForPostgres(writer);
@@ -839,10 +845,12 @@ namespace SQLServer_Stored_Procedure_Converter
         /// and values are a Dictionary of mappings of original column names to new column names in PostgreSQL;
         /// names should not have double quotes around them
         /// </param>
+        /// <param name="updateSchemaOnTables"></param>
         private void UpdateTableAndColumnNames(
             List<string> cachedLines,
             Dictionary<string, WordReplacer> tableNameMap,
-            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap)
+            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap,
+            bool updateSchemaOnTables)
         {
             var tablesInLine = new List<string>();
             var updatedLineIndices = new SortedSet<int>();
@@ -860,7 +868,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 var currentBlock = FindCurrentBlock(cachedLines, index, updatedLineIndices, out var blockStartIndex);
 
-                var updatedBlock = ReplaceNamesInBlock(tableNameMap, columnNameMap, currentBlock);
+                var updatedBlock = ReplaceNamesInBlock(tableNameMap, columnNameMap, currentBlock, updateSchemaOnTables);
 
                 for (var i = 0; i < updatedBlock.Count; i++)
                 {
@@ -960,7 +968,8 @@ namespace SQLServer_Stored_Procedure_Converter
         private List<string> ReplaceNamesInBlock(
             IReadOnlyDictionary<string, WordReplacer> tableNameMap,
             Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap,
-            IReadOnlyList<string> currentBlock)
+            IReadOnlyList<string> currentBlock,
+            bool updateSchemaOnTables)
         {
             // Step through the columns loaded from the merged ColumnNameMap.txt file
 
@@ -970,7 +979,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             foreach (var dataLine in currentBlock)
             {
-                var updatedLine = NameUpdater.FindAndUpdateTableNames(tableNameMap, referencedTables, dataLine, false);
+                var updatedLine = NameUpdater.FindAndUpdateTableNames(tableNameMap, referencedTables, dataLine, updateSchemaOnTables);
 
                 updatedLines.Add(updatedLine);
             }
