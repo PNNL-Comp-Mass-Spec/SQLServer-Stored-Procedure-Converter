@@ -63,6 +63,23 @@ namespace SQLServer_Stored_Procedure_Converter
         }
 
         /// <summary>
+        /// Get the object name, without the schema
+        /// </summary>
+        /// <param name="objectName"></param>
+        /// <returns></returns>
+        public static string GetNameWithoutSchema(string objectName)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
+                return string.Empty;
+
+            var periodIndex = objectName.IndexOf('.');
+            if (periodIndex > 0 && periodIndex < objectName.Length - 1)
+                return objectName.Substring(periodIndex + 1);
+
+            return objectName;
+        }
+
+        /// <summary>
         /// Clear all cached data
         /// </summary>
         /// <param name="procedureName">Procedure or function name</param>
@@ -156,6 +173,10 @@ namespace SQLServer_Stored_Procedure_Converter
 
             writer.WriteLine("END");
             writer.WriteLine("$$;");
+            writer.WriteLine();
+
+            var procedureNameWithoutSchema = GetNameWithoutSchema(ProcedureName);
+            writer.WriteLine("COMMENT ON PROCEDURE {0} IS '{1}';", ProcedureName, procedureNameWithoutSchema);
         }
 
         private void WriteArgumentComments(TextWriter writer)

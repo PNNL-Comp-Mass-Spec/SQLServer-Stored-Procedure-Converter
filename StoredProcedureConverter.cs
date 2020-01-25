@@ -247,19 +247,6 @@ namespace SQLServer_Stored_Procedure_Converter
             return !match.Success ? string.Empty : match.Value;
         }
 
-        private string GetNameWithoutSchema(string objectName)
-        {
-            if (string.IsNullOrWhiteSpace(objectName))
-                return string.Empty;
-
-            var periodIndex = objectName.IndexOf('.');
-            if (periodIndex > 0 && periodIndex < objectName.Length - 1)
-                return objectName.Substring(periodIndex + 1);
-
-            return objectName;
-
-        }
-
         /// <summary>
         /// Return true if the line is whitespace, or starts with --, Begin, If, or Else
         /// </summary>
@@ -482,7 +469,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         {
                             if (!string.IsNullOrWhiteSpace(storedProcedureInfo.ProcedureName))
                             {
-                                var procedureNameWithoutSchema = GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
+                                var procedureNameWithoutSchema = StoredProcedureDDL.GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
                                 if (mOptions.StoredProcedureNamesToSkip.Contains(procedureNameWithoutSchema))
                                 {
                                     OnStatusEvent("Skipping " + storedProcedureInfo.ProcedureName);
