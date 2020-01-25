@@ -433,6 +433,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 var cachedLines = new Queue<string>();
 
                 var skipNextLineIfGo = false;
+                var insideDateBlock = false;
 
                 // This stack tracks nested if and while blocks; it is last in, first out (LIFO)
                 var controlBlockStack = new Stack<ControlBlockTypes>();
@@ -526,6 +527,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (!foundStartOfProcedureCommentBlock && dataLine.StartsWith("/*****************"))
                         {
                             foundStartOfProcedureCommentBlock = true;
+                            insideDateBlock = false;
                             storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
                             continue;
                         }
@@ -533,6 +535,14 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock && dataLine.EndsWith("*****************/"))
                         {
                             foundEndOfProcedureCommentBlock = true;
+                            if (insideDateBlock)
+                            {
+                                storedProcedureInfo.ProcedureCommentBlock.Add(string.Format(
+                                    "**          {0:MM/dd/yyyy} mem - Ported to PostgreSQL",
+                                    DateTime.Now));
+                                insideDateBlock = false;
+                            }
+
                             storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
                             continue;
                         }
@@ -554,7 +564,7 @@ namespace SQLServer_Stored_Procedure_Converter
                                 continue;
                             }
 
-                            if (dataLine.IndexOf("Parameters:", StringComparison.OrdinalIgnoreCase) > 1) 
+                            if (dataLine.IndexOf("Parameters:", StringComparison.OrdinalIgnoreCase) > 1)
                             {
                                 // Skip lines of the form "**  Parameters:" if the next line is blank
                                 var lineAfterAsterisks = dataLine.Substring(2).Trim();
@@ -571,7 +581,20 @@ namespace SQLServer_Stored_Procedure_Converter
                                 }
                             }
 
-                            StoreProcedureCommentLine(storedProcedureInfo, dataLine);
+                            if (insideDateBlock && trimmedLine.Equals("**"))
+                            {
+                                storedProcedureInfo.ProcedureCommentBlock.Add(string.Format(
+                                    "**          {0:MM/dd/yyyy} mem - Ported to PostgreSQL",
+                                    DateTime.Now));
+                                insideDateBlock = false;
+                            }
+
+                            StoreProcedureCommentLine(storedProcedureInfo, dataLine, out var startOfDateBlock);
+                            if (startOfDateBlock)
+                            {
+                                insideDateBlock = true;
+                            }
+
                             continue;
                         }
 
@@ -1095,7 +1118,7 @@ namespace SQLServer_Stored_Procedure_Converter
             storedProcedureInfo.ProcedureArguments.Add(ReplaceTabs(updatedArgumentLine));
         }
 
-        private void StoreProcedureCommentLine(StoredProcedureDDL storedProcedureInfo, string dataLine)
+        private void StoreProcedureCommentLine(StoredProcedureDDL storedProcedureInfo, string dataLine, out bool startOfDateBlock)
         {
             // Replace tabs with spaces
             // However, handle spaces in the stored procedure comment block specially
@@ -1112,12 +1135,19 @@ namespace SQLServer_Stored_Procedure_Converter
                     storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
                 }
 
+                startOfDateBlock = false;
                 return;
             }
+
+            // The line is of the form
+            // **  Desc:
+            // **  Auth:
+            // **  Date:
 
             string updatedDataLine;
             if (labelMatch.Groups["Value"].Value.Length > 0)
             {
+                // There is text after the label
                 updatedDataLine = string.Format(
                     "**  {0}:   {1}",
                     labelMatch.Groups["Label"].Value,
@@ -1125,12 +1155,15 @@ namespace SQLServer_Stored_Procedure_Converter
             }
             else
             {
+                // No text after the label
                 updatedDataLine = string.Format(
                     "**  {0}:",
                     labelMatch.Groups["Label"].Value);
             }
 
             storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(updatedDataLine));
+
+            startOfDateBlock = labelMatch.Groups["Label"].Value.Equals("Date", StringComparison.OrdinalIgnoreCase);
         }
 
         private void StoreSelectAssignVariable(ICollection<string> procedureBody, Match selectAssignVariableMatch)
