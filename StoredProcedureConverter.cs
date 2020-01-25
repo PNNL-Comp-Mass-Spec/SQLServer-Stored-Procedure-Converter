@@ -412,7 +412,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 // This is used to update SELECT statements that assign a value to a variable
                 var selectAssignVariableMatcher = new Regex(
-                    @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=(?<SourceColumn>.+)",
+                    @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=\s*(?<SourceColumn>.+)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var mapFileSuccess = LoadColumnNameMapFile(out var tableNameMap, out var columnNameMap);
