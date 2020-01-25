@@ -596,7 +596,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         // The ReplaceText function performs a case-insensitive search/replace
                         // It supports RegEx
-                        dataLine = ReplaceText(dataLine, "\bIsNull\b", "Coalesce");
+                        dataLine = ReplaceText(dataLine, @"\bIsNull\b", "Coalesce");
 
                         var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                         if (declareAndAssignMatch.Success)
