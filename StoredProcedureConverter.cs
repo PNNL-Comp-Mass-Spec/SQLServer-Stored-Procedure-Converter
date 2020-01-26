@@ -147,6 +147,11 @@ namespace SQLServer_Stored_Procedure_Converter
                 return;
             }
 
+            while (updatedLine != null && updatedLine.EndsWith(";;"))
+            {
+                updatedLine = updatedLine.Substring(0, updatedLine.Length - 1);
+            }
+
             procedureBody.Add(updatedLine);
         }
 
