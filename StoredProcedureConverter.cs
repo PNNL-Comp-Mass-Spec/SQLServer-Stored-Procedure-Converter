@@ -615,9 +615,25 @@ namespace SQLServer_Stored_Procedure_Converter
                             continue;
                         }
 
-                        // The ReplaceText function performs a case-insensitive search/replace
-                        // It supports RegEx
+                        // Perform some standard text replacements using ReplaceText
+                        // It performs a case-insensitive search/replace and it supports Regex
+
                         dataLine = ReplaceText(dataLine, @"\bIsNull\b", "Coalesce");
+
+                        dataLine = ReplaceText(dataLine, @"\bDatetime\b", "timestamp");
+
+                        dataLine = ReplaceText(dataLine, @"\bGetDate\b\s*\(\)", "CURRENT_TIMESTAMP");
+
+                        // Stored procedures with smallint parameters are harder to call, since you have to explicitly cast numbers to ::smallint
+                        // Thus, replace both tinyint and smallint with int (aka integer or int4)
+                        dataLine = ReplaceText(dataLine, @"\b(tinyint|smallint)\b", "int");
+
+                        // ReSharper disable CommentTypo
+
+                        // This matches user_name(), suser_name(), or suser_sname()
+                        dataLine = ReplaceText(dataLine, @"\bs*user_s*name\b\s*\(\)", "session_user");
+
+                        // ReSharper restore CommentTypo
 
                         var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                         if (declareAndAssignMatch.Success)
