@@ -1107,7 +1107,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 updatedArgumentLine = VarcharToText(updatedArgumentLine);
             }
 
-            // Note that PostgreSQL 11 and 12 support IN or INOUT variables; not OUT variables
+            // Note that PostgreSQL 11 and 12 support IN or INOUT arguments; not OUT arguments
             if (updatedArgumentLine.IndexOf(" output,", StringComparison.OrdinalIgnoreCase) > 0)
             {
                 updatedArgumentLine = "INOUT " + updatedArgumentLine.Replace(" output,", ",").Trim();
@@ -1130,6 +1130,10 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 updatedArgumentLine = updatedArgumentLine.Substring(0, commentIndex).Trim();
             }
+
+            // Stored procedures with smallint parameters are harder to call, since you have to explicitly cast numbers to ::smallint
+            // Thus, replace both tinyint and smallint with int (aka integer or int4)
+            updatedArgumentLine = ReplaceText(updatedArgumentLine, @"\b(tinyint|smallint)\b", "int");
 
             storedProcedureInfo.ProcedureArguments.Add(ReplaceTabs(updatedArgumentLine));
         }
