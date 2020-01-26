@@ -802,8 +802,15 @@ namespace SQLServer_Stored_Procedure_Converter
                             var updatedLine = UpdateFunctionNames(UpdateVariablePrefix(dataLine));
                             AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Loop");
 
-                            // Assume the next line starts with Begin
                             controlBlockStack.Push(ControlBlockTypes.While);
+
+                            // If the next line starts with BEGIN, skip it
+                            // (since PostgreSQL syntax does not use Begin at the start of While Loops, only at the start of multi-line If blocks)
+                            ReadAndCacheLines(reader, cachedLines, 1);
+                            if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
+                            {
+                                cachedLines.Dequeue();
+                            }
 
                             continue;
                         }
