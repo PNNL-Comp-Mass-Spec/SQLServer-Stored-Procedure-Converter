@@ -117,6 +117,14 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
+        /// This is used to find text that starts with @ plus the next letter, number, or underscore
+        /// It uses negative look behind to avoid matching @@error
+        /// </summary>
+        private readonly Regex mVariableStartMatcher = new Regex(
+            @"(?<!@)@(?<FirstCharacter>[a-z0-9_])",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
         /// Options
         /// </summary>
         private readonly StoredProcedureConverterOptions mOptions;
@@ -963,9 +971,11 @@ namespace SQLServer_Stored_Procedure_Converter
             var assignedValueUpdatedFunctions = UpdateFunctionNames(assignedValueUpdatedOperators);
             var assignedValueToUse = VarcharToText(assignedValueUpdatedFunctions);
 
-            var updatedLine = string.Format("{0}_{1} := {2};{3}",
+            var updatedVariableName = UpdateVariablePrefix("@" + assignVariableMatch.Groups["VariableName"].Value);
+
+            var updatedLine = string.Format("{0}{1} := {2};{3}",
                 assignVariableMatch.Groups["LeadingWhitespace"].Value,
-                assignVariableMatch.Groups["VariableName"].Value,
+                updatedVariableName,
                 assignedValueToUse,
                 commentText);
 
@@ -1188,7 +1198,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private void StoreSelectAssignVariable(ICollection<string> procedureBody, Match selectAssignVariableMatch)
         {
-            var updatedVariableName = "_" + selectAssignVariableMatch.Groups["VariableName"].Value;
+            var updatedVariableName = UpdateVariablePrefix("@" + selectAssignVariableMatch.Groups["VariableName"].Value);
 
             var updatedLine = string.Format("{0}SELECT {1} INTO {2}",
                 selectAssignVariableMatch.Groups["LeadingWhitespace"].Value,
@@ -1218,20 +1228,24 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private void StoreVariableToDeclare(StoredProcedureDDL storedProcedureInfo, Match declareMatch)
         {
-            var variableDeclaration = string.Format("_{0}{1}",
+            // Use an @ sign here
+            // UpdateVariablePrefix will change it to an underscore
+            var variableDeclaration = string.Format("@{0}{1}",
                 declareMatch.Groups["VariableName"].Value,
                 VarcharToText(declareMatch.Groups["DataType"].Value));
+
+            var variableDeclarationToLower = UpdateVariablePrefix(variableDeclaration);
 
             string updatedDeclaration;
             var assignedValue = declareMatch.Groups["AssignedValue"].Value;
 
             if (string.IsNullOrWhiteSpace(assignedValue))
             {
-                updatedDeclaration = ReplaceTabs(variableDeclaration);
+                updatedDeclaration = ReplaceTabs(variableDeclarationToLower);
             }
             else
             {
-                updatedDeclaration = ReplaceTabs(variableDeclaration + ":= " + assignedValue);
+                updatedDeclaration = ReplaceTabs(variableDeclarationToLower + ":= " + assignedValue);
             }
 
             storedProcedureInfo.LocalVariablesToDeclare.Add(updatedDeclaration);
@@ -1312,9 +1326,44 @@ namespace SQLServer_Stored_Procedure_Converter
             return updatedLine;
         }
 
+        /// <summary>
+        /// Change the variable prefix from @ and _
+        /// Also change to camelCase
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <returns></returns>
         private string UpdateVariablePrefix(string dataLine)
         {
-            return dataLine.Replace('@', '_');
+            string textToCheck;
+            if (dataLine.StartsWith("_"))
+            {
+                if (dataLine.Length < 2)
+                    return dataLine;
+
+
+                // Already converted to PostgreSQL; change back to @
+                textToCheck = "@" + dataLine.Substring(1);
+            }
+            else
+            {
+                textToCheck = dataLine;
+            }
+
+            if (!mVariableStartMatcher.IsMatch(textToCheck))
+                return dataLine;
+
+            var updatedLined = mVariableStartMatcher.Replace(textToCheck, UpdateVariablePrefixEvaluator);
+            return updatedLined;
+        }
+
+        /// <summary>
+        /// This method replaces the @ with _, then changes to lowercase
+        /// </summary>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        private static string UpdateVariablePrefixEvaluator(Match match)
+        {
+            return match.Result("_$1").ToLower();
         }
 
         private string VarcharToText(string dataLine)
