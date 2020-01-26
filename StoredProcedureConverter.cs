@@ -463,6 +463,9 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         var trimmedLine = dataLine.Trim();
 
+                        if (trimmedLine.Contains("Custom SQL to find"))
+                            Console.WriteLine("Check this code");
+
                         // Skip lines that are null, but don't skip blank lines
                         if (dataLine == null)
                             continue;
@@ -1087,7 +1090,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private void StorePrintVariable(ICollection<string> procedureBody, Match printMatch)
         {
-            var updatedVariableName = "_" + printMatch.Groups["VariableName"].Value;
+            var updatedVariableName = UpdateVariablePrefix("@" + printMatch.Groups["VariableName"].Value);
 
             var raiseInfoLine = string.Format("{0}RAISE INFO '%', {1};",
                 printMatch.Groups["LeadingWhitespace"].Value,
