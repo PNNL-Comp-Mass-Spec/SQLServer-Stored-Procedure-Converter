@@ -639,7 +639,6 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (declareAndAssignMatch.Success)
                         {
                             StoreVariableToDeclare(storedProcedureInfo, declareAndAssignMatch);
-                            StoreSetStatement(storedProcedureInfo.ProcedureBody, declareAndAssignMatch);
                             continue;
                         }
 
@@ -1219,7 +1218,19 @@ namespace SQLServer_Stored_Procedure_Converter
                 declareMatch.Groups["VariableName"].Value,
                 VarcharToText(declareMatch.Groups["DataType"].Value));
 
-            storedProcedureInfo.LocalVariablesToDeclare.Add(ReplaceTabs(variableDeclaration));
+            string updatedDeclaration;
+            var assignedValue = declareMatch.Groups["AssignedValue"].Value;
+
+            if (string.IsNullOrWhiteSpace(assignedValue))
+            {
+                updatedDeclaration = ReplaceTabs(variableDeclaration);
+            }
+            else
+            {
+                updatedDeclaration = ReplaceTabs(variableDeclaration + ":= " + assignedValue);
+            }
+
+            storedProcedureInfo.LocalVariablesToDeclare.Add(updatedDeclaration);
         }
 
         private void UpdateAndAppendLine(ICollection<string> procedureBody, string dataLine)
