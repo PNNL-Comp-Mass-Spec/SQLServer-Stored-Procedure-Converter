@@ -1295,7 +1295,7 @@ namespace SQLServer_Stored_Procedure_Converter
             var printIndex = dataLine.IndexOf("Print", StringComparison.OrdinalIgnoreCase);
             var leadingWhitespace = GetLeadingWhitespace(dataLine);
 
-            var updatedLine = leadingWhitespace + "RAISE INFO" + dataLine.Substring(printIndex + "Print".Length) + ";";
+            var updatedLine = leadingWhitespace + "RAISE INFO '%'," + dataLine.Substring(printIndex + "Print".Length) + ";";
             return updatedLine;
         }
         private string UpdateSetStatement(string dataLine)
@@ -1317,6 +1317,5 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             return mVarcharMatcher.Replace(dataLine, "text");
         }
-
     }
 }
