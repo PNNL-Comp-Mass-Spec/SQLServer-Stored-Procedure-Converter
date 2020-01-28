@@ -646,6 +646,10 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         // ReSharper restore CommentTypo
 
+                        dataLine = ReplaceText(dataLine, @"CREATE TABLE #", "CREATE TEMP TABLE ");
+
+                        dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
+
                         var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                         if (declareAndAssignMatch.Success)
                         {
@@ -1162,6 +1166,8 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             // Replace tabs with spaces
             // However, handle spaces in the stored procedure comment block specially
+
+            dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
 
             var labelMatch = mCommentBlockLabelMatcher.Match(dataLine);
             if (!labelMatch.Success)
