@@ -125,6 +125,13 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
+        /// This is used to find fields declared as Identity(1,1)
+        /// </summary>
+        private readonly Regex mIdentityFieldMatcher = new Regex(
+            @"(Identity\s*\(1,1\)\s*NOT NULL|Not Null Identity\s*\(1,1\)|Identity\s*\(1,1\))",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
         /// Options
         /// </summary>
         private readonly StoredProcedureConverterOptions mOptions;
