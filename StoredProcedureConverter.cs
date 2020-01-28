@@ -43,7 +43,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This is used to match varchar(10) or longer
         /// </summary>
         private readonly Regex mVarcharMatcher = new Regex(
-            @"n*varchar\(\d{2,}\)",
+            @"n*varchar\((\d{2,}|max)\)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -1267,6 +1267,13 @@ namespace SQLServer_Stored_Procedure_Converter
             dataLine = UpdateSetStatement(dataLine);
             dataLine = UpdatePrintStatement(dataLine);
             dataLine = UpdateFunctionNames(dataLine);
+
+            if (dataLine.IndexOf("varchar", StringComparison.OrdinalIgnoreCase) > 0)
+            {
+                // Change any instance of varchar(10) or larger to text
+                dataLine = VarcharToText(dataLine);
+            }
+
             AppendLine(procedureBody, dataLine);
         }
 
