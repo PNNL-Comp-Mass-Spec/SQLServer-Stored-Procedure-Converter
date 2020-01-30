@@ -139,6 +139,13 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
+        /// This is used to find UPDATE or DELETE queries
+        /// </summary>
+        private readonly Regex mUpdateOrDeleteQueryMatcher = new Regex(
+            @"^\s*(?<QueryType>UPDATE|DELETE)\s+(?<TargetTable>[^ ]+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
         /// Options
         /// </summary>
         private readonly StoredProcedureConverterOptions mOptions;
@@ -455,6 +462,9 @@ namespace SQLServer_Stored_Procedure_Converter
                 var skipNextLineIfGo = false;
                 var insideDateBlock = false;
 
+                var mostRecentUpdateOrDeleteType = string.Empty;
+                var mostRecentUpdateOrDeleteTable = string.Empty;
+
                 // This stack tracks nested if and while blocks; it is last in, first out (LIFO)
                 var controlBlockStack = new Stack<ControlBlockTypes>();
 
@@ -489,6 +499,11 @@ namespace SQLServer_Stored_Procedure_Converter
                             SkipNextLineIfBlank(reader, cachedLines);
                             skipNextLineIfGo = false;
                             continue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(mostRecentUpdateOrDeleteTable) && string.IsNullOrWhiteSpace(trimmedLine))
+                        {
+                            mostRecentUpdateOrDeleteTable = string.Empty;
                         }
 
                         if (SkipLine(dataLine, out skipNextLineIfGo))
@@ -870,6 +885,56 @@ namespace SQLServer_Stored_Procedure_Converter
                             var updatedLine = "Call " + trimmedLine.Substring("exec ".Length);
                             AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
                             continue;
+                        }
+
+                        var updateOrDeleteQueryMatch = mUpdateOrDeleteQueryMatcher.Match(trimmedLine);
+                        if (updateOrDeleteQueryMatch.Success)
+                        {
+                            mostRecentUpdateOrDeleteType = updateOrDeleteQueryMatch.Groups["QueryType"].Value;
+                            mostRecentUpdateOrDeleteTable = updateOrDeleteQueryMatch.Groups["TargetTable"].Value;
+                        }
+                        else
+                        {
+                            if (mostRecentUpdateOrDeleteTable.Length > 0 &&
+                                trimmedLine.StartsWith("FROM " + mostRecentUpdateOrDeleteTable, StringComparison.OrdinalIgnoreCase))
+                            {
+                                UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
+
+                                var leadingWhitespace = GetLeadingWhitespace(dataLine);
+                                var updateQueryWarnings = new List<string>
+                                {
+                                    string.Empty,
+                                    "/********************************************************************************",
+                                    "** This " + mostRecentUpdateOrDeleteType + " query includes the target table name in the FROM clause",
+                                    "** The WHERE clause needs to have a self join to the target table, for example:",
+                                    string.Format(
+                                        "** WHERE {0}.Primary_Key_ID = {0}Aliased.Primary_Key_ID ", mostRecentUpdateOrDeleteTable)
+                                };
+
+                                if (mostRecentUpdateOrDeleteType.StartsWith("delete", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    updateQueryWarnings.Add("**");
+                                    updateQueryWarnings.Add("** Delete queries must also include the USING keyword");
+                                    updateQueryWarnings.Add("** Alternatively, the more standard approach is to rearrange the query to be similar to");
+                                    updateQueryWarnings.Add("** DELETE FROM target WHERE id in (SELECT id from ...)");
+                                }
+
+                                updateQueryWarnings.Add("********************************************************************************/");
+                                updateQueryWarnings.Add(string.Empty);
+                                updateQueryWarnings.Add("                       ToDo: Fix this query");
+                                updateQueryWarnings.Add(string.Empty);
+
+
+                                foreach (var item in updateQueryWarnings)
+                                {
+                                    if (item.Length > 0)
+                                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + item);
+                                    else
+                                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, item);
+                                }
+
+                                continue;
+                            }
                         }
 
                         // Normal line of code (or whitespace); append it to the body
