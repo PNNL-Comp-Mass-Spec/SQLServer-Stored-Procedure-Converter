@@ -110,10 +110,11 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// This is used to find a SQL Server variable name (starts with @)
+        /// This is used to find SQL Server variable names (which start with @)
+        /// It uses negative look behind to avoid matching @@error
         /// </summary>
         private readonly Regex mVariableNameMatcher = new Regex(
-            @"(?<VariableName>@[^\s]+)",
+            @"(?<!@)@(?<FirstCharacter>[a-z0-9_])(?<RemainingCharacters>[^\s]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -1457,13 +1458,17 @@ namespace SQLServer_Stored_Procedure_Converter
 
         /// <summary>
         /// Change all @ symbols to _
-        /// Does not attempt to switch case
+        /// Also change to camelCase
         /// </summary>
         /// <param name="dataLine"></param>
         /// <returns></returns>
         private string UpdateVariableNames(string dataLine)
         {
-            return ReplaceText(dataLine, "@", "_");
+            if (!dataLine.Contains("@"))
+                return dataLine;
+
+            var updatedLined = mVariableNameMatcher.Replace(dataLine, UpdateVariableNameEvaluator);
+            return updatedLined;
         }
 
         /// <summary>
@@ -1503,6 +1508,16 @@ namespace SQLServer_Stored_Procedure_Converter
         private static string UpdateVariablePrefixEvaluator(Match match)
         {
             return match.Result("_$1").ToLower();
+        }
+
+        /// <summary>
+        /// This method replaces the @ with _, then changes to lowercase
+        /// </summary>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        private static string UpdateVariableNameEvaluator(Match match)
+        {
+            return match.Result("_$1").ToLower() + match.Result("$2");
         }
 
         private string VarcharToText(string dataLine)
