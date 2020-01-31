@@ -790,7 +790,7 @@ namespace SQLServer_Stored_Procedure_Converter
                             // Change to "If ... Then"
                             // This change assumes the If condition does not span multiple lines
 
-                            var updatedLine = UpdateFunctionNames(UpdateVariablePrefix(dataLine));
+                            var updatedLine = UpdateFunctionNames(UpdateVariableNames(dataLine));
                             AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Then");
 
                             // Peek at the next two or three lines to determine what to do
@@ -847,7 +847,7 @@ namespace SQLServer_Stored_Procedure_Converter
                             // While statement
                             // Change to "While ... Loop"
 
-                            var updatedLine = UpdateFunctionNames(UpdateVariablePrefix(dataLine));
+                            var updatedLine = UpdateFunctionNames(UpdateVariableNames(dataLine));
                             AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Loop");
 
                             controlBlockStack.Push(ControlBlockTypes.While);
@@ -874,7 +874,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (trimmedLine.StartsWith("exec @myError = ", StringComparison.OrdinalIgnoreCase))
                         {
                             var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                            var updatedLine = "Call " + UpdateVariablePrefix(trimmedLine.Substring("exec @myError = ".Length));
+                            var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec @myError = ".Length));
                             AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
                             continue;
                         }
@@ -882,7 +882,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (trimmedLine.StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
                         {
                             var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                            var updatedLine = "Call " + trimmedLine.Substring("exec ".Length);
+                            var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec ".Length));
                             AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
                             continue;
                         }
@@ -1259,6 +1259,7 @@ namespace SQLServer_Stored_Procedure_Converter
             // However, handle spaces in the stored procedure comment block specially
 
             dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
+            dataLine = UpdateVariableNames(dataLine);
 
             var labelMatch = mCommentBlockLabelMatcher.Match(dataLine);
             if (!labelMatch.Success)
@@ -1360,7 +1361,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private void UpdateAndAppendLine(ICollection<string> procedureBody, string dataLine)
         {
-            dataLine = UpdateVariablePrefix(dataLine);
+            dataLine = UpdateVariableNames(dataLine);
             dataLine = UpdateSetStatement(dataLine);
             dataLine = UpdatePrintStatement(dataLine);
             dataLine = UpdateFunctionNames(dataLine);
@@ -1441,7 +1442,18 @@ namespace SQLServer_Stored_Procedure_Converter
         }
 
         /// <summary>
-        /// Change the variable prefix from @ and _
+        /// Change all @ symbols to _
+        /// Does not attempt to switch case
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <returns></returns>
+        private string UpdateVariableNames(string dataLine)
+        {
+            return ReplaceText(dataLine, "@", "_");
+        }
+
+        /// <summary>
+        /// If dataLine starts with @, change it to _
         /// Also change to camelCase
         /// </summary>
         /// <param name="dataLine"></param>
@@ -1453,7 +1465,6 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 if (dataLine.Length < 2)
                     return dataLine;
-
 
                 // Already converted to PostgreSQL; change back to @
                 textToCheck = "@" + dataLine.Substring(1);
