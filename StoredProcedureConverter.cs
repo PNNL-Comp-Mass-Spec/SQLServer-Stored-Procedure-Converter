@@ -883,6 +883,9 @@ namespace SQLServer_Stored_Procedure_Converter
                         {
                             var leadingWhitespace = GetLeadingWhitespace(dataLine);
                             var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec @myError = ".Length));
+                            if (updatedLine.Contains("="))
+                                updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " := ");
+
                             AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
                             continue;
                         }
@@ -891,6 +894,9 @@ namespace SQLServer_Stored_Procedure_Converter
                         {
                             var leadingWhitespace = GetLeadingWhitespace(dataLine);
                             var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec ".Length));
+                            if (updatedLine.Contains("="))
+                                updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " := ");
+
                             AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
                             continue;
                         }
