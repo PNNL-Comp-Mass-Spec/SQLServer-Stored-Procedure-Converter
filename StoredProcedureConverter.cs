@@ -95,8 +95,8 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// This is used to switch from + to || for string concatenation
-        /// It matches single quoted text preceded by a plus sign (including + '')
+        /// This is used to switch from CharIndex('text', 'TextToSearch') to
+        /// position('Text' in 'TextToSearch')
         /// </summary>
         private readonly Regex mCharIndexUpdater = new Regex(
             @"CharIndex\s*\(\s*(?<TextToFind>[^)]+)\s*,\s*(?<TextToSearch>[^)]+)\s*\)",
