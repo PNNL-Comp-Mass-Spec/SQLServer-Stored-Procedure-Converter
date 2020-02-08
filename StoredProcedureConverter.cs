@@ -463,6 +463,9 @@ namespace SQLServer_Stored_Procedure_Converter
                 var skipNextLineIfGo = false;
                 var insideDateBlock = false;
 
+                var previousTrimmedLine = string.Empty;
+                var trimmedLine = string.Empty;
+
                 var mostRecentUpdateOrDeleteType = string.Empty;
                 var mostRecentUpdateOrDeleteTable = string.Empty;
 
@@ -486,14 +489,28 @@ namespace SQLServer_Stored_Procedure_Converter
                             dataLine = reader.ReadLine();
                         }
 
-                        var trimmedLine = dataLine.Trim();
+                        // Skip lines that are null, but don't skip blank lines
+                        if (dataLine == null)
+                            continue;
+
+                        previousTrimmedLine = string.Copy(trimmedLine);
+                        trimmedLine = dataLine.Trim();
 
                         if (trimmedLine.Contains("Custom SQL to find"))
                             Console.WriteLine("Check this code");
 
-                        // Skip lines that are null, but don't skip blank lines
-                        if (dataLine == null)
+                        // Skip lines that assign 0 to @myError
+                        if (trimmedLine.Equals("Set @myError = 0", StringComparison.OrdinalIgnoreCase))
                             continue;
+
+                        // If the previous line was "Declare @myRowCount" or "Declare @myError", skip lines that assign 0 to @myRowCount
+                        if (trimmedLine.Equals("Set @myRowCount = 0", StringComparison.OrdinalIgnoreCase) &&
+                            (previousTrimmedLine.StartsWith("Declare @myRowCount", StringComparison.OrdinalIgnoreCase) || 
+                             previousTrimmedLine.StartsWith("Declare @myError", StringComparison.OrdinalIgnoreCase) ||
+                             previousTrimmedLine.StartsWith("Set @myError = 0", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            continue;
+                        }
 
                         if (skipNextLineIfGo && dataLine.StartsWith("GO", StringComparison.OrdinalIgnoreCase))
                         {
@@ -1351,6 +1368,14 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private void StoreVariableToDeclare(StoredProcedureDDL storedProcedureInfo, Match declareMatch)
         {
+            var variableName = declareMatch.Groups["VariableName"].Value;
+
+            if (variableName.Equals("myError", StringComparison.OrdinalIgnoreCase))
+            {
+                // Skip this variable
+                return;
+            }
+
             // Use an @ sign here
             // UpdateVariablePrefix will change it to an underscore
             var variableDeclaration = string.Format("@{0}{1}",

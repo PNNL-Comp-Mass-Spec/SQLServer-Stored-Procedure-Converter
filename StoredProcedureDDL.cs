@@ -160,6 +160,12 @@ namespace SQLServer_Stored_Procedure_Converter
                 writer.WriteLine("DECLARE");
                 foreach (var item in LocalVariablesToDeclare)
                 {
+                    if (item.StartsWith("_myRowCount", StringComparison.OrdinalIgnoreCase))
+                    {
+                        writer.WriteLine("    _myRowCount int := 0;");
+                        continue;
+                    }
+
                     writer.WriteLine("    " + item + ";");
                 }
             }
