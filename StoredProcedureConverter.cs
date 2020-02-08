@@ -1235,19 +1235,20 @@ namespace SQLServer_Stored_Procedure_Converter
             var argumentNameMatch = mVariableNameMatcher.Match(dataLine);
 
             string argumentName;
+            string updatedArgumentLine;
 
             if (argumentNameMatch.Success)
             {
-                var argumentNameSqlServer = argumentNameMatch.Groups["VariableName"].Value;
-                argumentName = UpdateVariablePrefix(argumentNameSqlServer);
+                argumentName = UpdateVariablePrefix(argumentNameMatch.Value);
+                updatedArgumentLine = mVariableNameMatcher.Replace(dataLine, UpdateVariableNameEvaluator).Trim();
             }
             else
             {
                 // This shouldn't normally happen
-                argumentName = dataLine;
+                argumentName = string.Empty;
+                updatedArgumentLine = dataLine.Trim();
             }
 
-            var updatedArgumentLine = UpdateVariablePrefix(dataLine).Trim();
             if (updatedArgumentLine.IndexOf("varchar", StringComparison.OrdinalIgnoreCase) > 0)
             {
                 // Change any instance of varchar(10) or larger to text
@@ -1379,8 +1380,8 @@ namespace SQLServer_Stored_Procedure_Converter
             // Use an @ sign here
             // UpdateVariablePrefix will change it to an underscore
             var variableDeclaration = string.Format("@{0}{1}",
-                declareMatch.Groups["VariableName"].Value,
-                VarcharToText(declareMatch.Groups["DataType"].Value));
+            variableName,
+            VarcharToText(declareMatch.Groups["DataType"].Value));
 
             var variableDeclarationToLower = UpdateVariablePrefix(variableDeclaration);
 
