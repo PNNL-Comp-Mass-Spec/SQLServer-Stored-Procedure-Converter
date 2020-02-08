@@ -1470,7 +1470,8 @@ namespace SQLServer_Stored_Procedure_Converter
             var leadingWhitespace = GetLeadingWhitespace(dataLine);
 
             var updatedLine = leadingWhitespace + "RAISE INFO '%'," + dataLine.Substring(printIndex + "Print".Length) + ";";
-            return updatedLine;
+
+            return UpdateConcatenationOperator(updatedLine);
         }
         private string UpdateSetStatement(string dataLine)
         {

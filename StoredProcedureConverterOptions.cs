@@ -13,7 +13,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "January 30, 2020";
+        public const string PROGRAM_DATE = "February 5, 2020";
 
         #endregion
 
