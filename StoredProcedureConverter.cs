@@ -505,7 +505,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         // If the previous line was "Declare @myRowCount" or "Declare @myError", skip lines that assign 0 to @myRowCount
                         if (trimmedLine.Equals("Set @myRowCount = 0", StringComparison.OrdinalIgnoreCase) &&
-                            (previousTrimmedLine.StartsWith("Declare @myRowCount", StringComparison.OrdinalIgnoreCase) || 
+                            (previousTrimmedLine.StartsWith("Declare @myRowCount", StringComparison.OrdinalIgnoreCase) ||
                              previousTrimmedLine.StartsWith("Declare @myError", StringComparison.OrdinalIgnoreCase) ||
                              previousTrimmedLine.StartsWith("Set @myError = 0", StringComparison.OrdinalIgnoreCase)))
                         {
@@ -696,6 +696,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         dataLine = ReplaceText(dataLine, @"CREATE TABLE #", "CREATE TEMP TABLE ");
 
                         dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
+                        dataLine = ReplaceText(dataLine, @"#IX", "IX");
 
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
