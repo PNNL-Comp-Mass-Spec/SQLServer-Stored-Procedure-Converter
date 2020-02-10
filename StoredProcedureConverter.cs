@@ -701,10 +701,12 @@ namespace SQLServer_Stored_Procedure_Converter
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedList", "public.udf_parse_delimited_list");
+                        dataLine = ReplaceText(dataLine, "dbo.MakeTableFromList", "public.udf_parse_delimited_list");
 
                         dataLine = ReplaceText(dataLine, "udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
                         dataLine = ReplaceText(dataLine, "udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
                         dataLine = ReplaceText(dataLine, "udfParseDelimitedList", "public.udf_parse_delimited_list");
+                        dataLine = ReplaceText(dataLine, "MakeTableFromList", "public.udf_parse_delimited_list");
 
                         var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                         if (declareAndAssignMatch.Success)
