@@ -437,6 +437,10 @@ namespace SQLServer_Stored_Procedure_Converter
                     @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=\s*(?<SourceColumn>.+)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+                var createTempTableMatcher = new Regex(
+                    @"^(?<LeadingWhitespace>\s+)CREATE TABLE #(?<TempTableName>[^\s]+)(?<ExtraInfo>.+)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
                 var mapFileSuccess = LoadColumnNameMapFile(out var tableNameMap, out var columnNameMap);
 
                 if (!mapFileSuccess)
@@ -693,10 +697,6 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         // ReSharper restore CommentTypo
 
-                        dataLine = ReplaceText(dataLine, @"CREATE TABLE #", "CREATE TEMP TABLE ");
-
-                        dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
-                        dataLine = ReplaceText(dataLine, @"#IX", "IX");
 
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
                         dataLine = ReplaceText(dataLine, "dbo.udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
@@ -707,6 +707,22 @@ namespace SQLServer_Stored_Procedure_Converter
                         dataLine = ReplaceText(dataLine, "udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
                         dataLine = ReplaceText(dataLine, "udfParseDelimitedList", "public.udf_parse_delimited_list");
                         dataLine = ReplaceText(dataLine, "MakeTableFromList", "public.udf_parse_delimited_list");
+
+                        var createTempTableMatch = createTempTableMatcher.Match(dataLine);
+                        if (createTempTableMatch.Success)
+                        {
+                            dataLine = string.Format(
+                                "{0}DROP TABLE IF EXISTS {1};{2}{2}" +
+                                "{0}CREATE TEMP TABLE {1}{3}",
+                                createTempTableMatch.Groups["LeadingWhitespace"],
+                                createTempTableMatch.Groups["TempTableName"],
+                                Environment.NewLine,
+                                createTempTableMatch.Groups["ExtraInfo"]
+                            );
+                        }
+
+                        dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
+                        dataLine = ReplaceText(dataLine, @"#IX", "IX");
 
                         var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                         if (declareAndAssignMatch.Success)
