@@ -724,6 +724,8 @@ namespace SQLServer_Stored_Procedure_Converter
                         dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
                         dataLine = ReplaceText(dataLine, @"#IX", "IX");
 
+                        dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.udf_append_to_text");
+
                         var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                         if (declareAndAssignMatch.Success)
                         {
