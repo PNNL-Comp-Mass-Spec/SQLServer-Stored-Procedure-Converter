@@ -337,14 +337,12 @@ namespace SQLServer_Stored_Procedure_Converter
 
             var defaultSchema = "public";
 
-            var mapFileLoaded = mapReader.LoadSqlServerToPgSqlColumnMapFile(
+            return mapReader.LoadSqlServerToPgSqlColumnMapFile(
                 mapFile,
                 defaultSchema,
                 false,
                 out tableNameMap,
                 out columnNameMap);
-
-            return mapFileLoaded;
         }
 
         public bool ProcessFile(string inputFilePath)
@@ -380,9 +378,7 @@ namespace SQLServer_Stored_Procedure_Converter
                     outputFile.Directory.Create();
                 }
 
-                var success = ProcessFile(inputFile, outputFile);
-
-                return success;
+                return ProcessFile(inputFile, outputFile);
             }
             catch (Exception ex)
             {
@@ -1118,13 +1114,11 @@ namespace SQLServer_Stored_Procedure_Converter
 
             var updatedVariableName = UpdateVariablePrefix("@" + assignVariableMatch.Groups["VariableName"].Value);
 
-            var updatedLine = string.Format("{0}{1} := {2};{3}",
+            return string.Format("{0}{1} := {2};{3}",
                 assignVariableMatch.Groups["LeadingWhitespace"].Value,
                 updatedVariableName,
                 assignedValueToUse,
                 commentText);
-
-            return updatedLine;
         }
 
         private List<string> ReplaceNamesInBlock(
@@ -1463,8 +1457,7 @@ namespace SQLServer_Stored_Procedure_Converter
         private string UpdateConcatenationOperator(string dataLine)
         {
             var updatedLineA = mConcatenationReplacerA.Replace(dataLine, "||");
-            var updatedLineB = mConcatenationReplacerB.Replace(updatedLineA, "||");
-            return updatedLineB;
+            return mConcatenationReplacerB.Replace(updatedLineA, "||");
         }
 
         private string UpdatePrintStatement(string dataLine)
@@ -1485,8 +1478,7 @@ namespace SQLServer_Stored_Procedure_Converter
             if (!assignVariableMatch.Success)
                 return dataLine;
 
-            var updatedLine = ReformatSetStatement(assignVariableMatch);
-            return updatedLine;
+            return ReformatSetStatement(assignVariableMatch);
         }
 
         /// <summary>
@@ -1499,8 +1491,7 @@ namespace SQLServer_Stored_Procedure_Converter
             if (!dataLine.Contains("@"))
                 return dataLine;
 
-            var updatedLined = mVariableNameMatcher.Replace(dataLine, UpdateVariableNameEvaluator);
-            return updatedLined;
+            return mVariableNameMatcher.Replace(dataLine, UpdateVariableNameEvaluator);
         }
 
         /// <summary>
@@ -1527,8 +1518,7 @@ namespace SQLServer_Stored_Procedure_Converter
             if (!mVariableStartMatcher.IsMatch(textToCheck))
                 return dataLine;
 
-            var updatedLined = mVariableStartMatcher.Replace(textToCheck, UpdateVariablePrefixEvaluator);
-            return updatedLined;
+            return mVariableStartMatcher.Replace(textToCheck, UpdateVariablePrefixEvaluator);
         }
 
         /// <summary>

@@ -79,9 +79,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <returns></returns>
         public static string GetAppVersion()
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
-
-            return version;
+            return Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
         /// <summary>
