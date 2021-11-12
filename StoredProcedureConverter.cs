@@ -13,17 +13,11 @@ namespace SQLServer_Stored_Procedure_Converter
         // Ignore Spelling: auth, dbo, desc, lookbehind, mem, regex, tmp
         // Ignore Spelling: smallint, tinyint, varchar
 
-        #region "Constants and Enums"
-
         private enum ControlBlockTypes
         {
             If = 0,
             While = 1
         }
-
-        #endregion
-
-        #region "Member variables"
 
         /// <summary>
         /// This is used when backtracking and forward tracking to find lines of code that should be processed as a block

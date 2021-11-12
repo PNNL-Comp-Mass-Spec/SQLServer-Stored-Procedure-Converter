@@ -8,16 +8,10 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     public class StoredProcedureConverterOptions
     {
-        #region "Constants and Enums"
-
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "February 13, 2020";
-
-        #endregion
-
-        #region "Properties"
+        public const string PROGRAM_DATE = "November 12, 2021";
 
         [Option("StoredProcFile", "Input", "I", ArgPosition = 1, Required = true,
             HelpShowsDefault = false, IsInputFilePath = true,
@@ -60,8 +54,6 @@ namespace SQLServer_Stored_Procedure_Converter
                 }
             }
         }
-
-        #endregion
 
         /// <summary>
         /// Constructor
