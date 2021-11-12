@@ -10,6 +10,9 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class StoredProcedureConverter : EventNotifier
     {
+        // Ignore Spelling: auth, dbo, desc, lookbehind, mem, regex, tmp
+        // Ignore Spelling: smallint, tinyint, varchar
+
         #region "Constants and Enums"
 
         private enum ControlBlockTypes
@@ -548,7 +551,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                                     UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap, updateSchemaOnTables);
 
-                                    // Write out the the previous procedure (or function)
+                                    // Write out the previous procedure (or function)
                                     storedProcedureInfo.ToWriterForPostgres(writer);
                                 }
                             }

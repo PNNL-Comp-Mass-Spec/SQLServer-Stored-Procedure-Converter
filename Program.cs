@@ -8,6 +8,7 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class Program
     {
+        // Ignore Spelling: Conf
 
         private static DateTime mLastProgressTime;
 
