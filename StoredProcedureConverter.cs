@@ -763,8 +763,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                         var extraInfo = endMatch.Groups["ExtraInfo"].Value;
 
-                        var controlBlock = controlBlockStack.Pop();
-                        switch (controlBlock)
+                        switch (controlBlockStack.Pop())
                         {
                             case ControlBlockTypes.If:
                                 // If the next line is ELSE, skip this END statement
