@@ -474,15 +474,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 while (!reader.EndOfStream)
                 {
-                    string dataLine;
-                    if (cachedLines.Count > 0)
-                    {
-                        dataLine = cachedLines.Dequeue();
-                    }
-                    else
-                    {
-                        dataLine = reader.ReadLine();
-                    }
+                    var dataLine = cachedLines.Count > 0 ? cachedLines.Dequeue() : reader.ReadLine();
 
                     // Skip lines that are null, but don't skip blank lines
                     if (dataLine == null)
