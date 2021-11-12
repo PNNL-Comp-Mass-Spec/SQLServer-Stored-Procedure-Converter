@@ -452,11 +452,9 @@ namespace SQLServer_Stored_Procedure_Converter
                 // This queue tracks lines read from the input file; it is first in, first out (FIFO)
                 var cachedLines = new Queue<string>();
 
-                bool updateSchemaOnTables;
-                if (string.IsNullOrWhiteSpace(mOptions.SchemaName) || mOptions.SchemaName.Equals("public", StringComparison.OrdinalIgnoreCase))
-                    updateSchemaOnTables = false;
-                else
-                    updateSchemaOnTables = true;
+                var updateSchemaOnTables =
+                    !string.IsNullOrWhiteSpace(mOptions.SchemaName) &&
+                    !mOptions.SchemaName.Equals("public", StringComparison.OrdinalIgnoreCase);
 
                 var skipNextLineIfGo = false;
                 var insideDateBlock = false;
