@@ -28,7 +28,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// This is used when backtracking and forward tracking to find lines of code that should be processed as a block
         /// </summary>
-        private static readonly Regex mBlockBoundaryMatcher = new Regex(
+        private static readonly Regex mBlockBoundaryMatcher = new(
             @"^\s*(Begin|End|If|Else)\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -38,28 +38,28 @@ namespace SQLServer_Stored_Procedure_Converter
         /// For example, given: Auth:	mem
         /// The Label group will have "Auth" and the Value group will have "mem"
         /// </summary>
-        private readonly Regex mCommentBlockLabelMatcher = new Regex(
+        private readonly Regex mCommentBlockLabelMatcher = new(
             @"^\*\*\s+(?<Label>Desc|Auth|Date):\s*(?<Value>.*)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This is used to match varchar(10) or longer
         /// </summary>
-        private readonly Regex mVarcharMatcher = new Regex(
+        private readonly Regex mVarcharMatcher = new(
             @"n*varchar\((\d{2,}|max)\)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This finds leading whitespace (spaces and tabs)
         /// </summary>
-        private readonly Regex mLeadingWhitespaceMatcher = new Regex(@"^\s+", RegexOptions.Compiled);
+        private readonly Regex mLeadingWhitespaceMatcher = new(@"^\s+", RegexOptions.Compiled);
 
         /// <summary>
         /// This finds lines like:
         /// Set NoCount On
         /// Set XACT_ABORT, NoCount on
         /// </summary>
-        private readonly Regex mSetNoCountMatcher = new Regex(
+        private readonly Regex mSetNoCountMatcher = new(
             @"^\s+Set.+(XACT_ABORT|NoCount).+On$",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -67,7 +67,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This finds variable assignment statements, looking for Set followed by a variable name and an equals sign
         /// Although there is typically a value after the equals sign, this is not a requirement (the value could be on the next line)
         /// </summary>
-        private readonly Regex mSetStatementMatcher = new Regex(
+        private readonly Regex mSetStatementMatcher = new(
             @"^(?<LeadingWhitespace>\s*)Set\s+[@_](?<VariableName>[^\s]+)\s*=\s*(?<AssignedValue>.*)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -76,7 +76,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// It matches single quoted text followed by a plus sign (including '' +)
         /// </summary>
         /// <remarks>This Regex uses positive lookbehind to find the quoted text before the plus sign</remarks>
-        private readonly Regex mConcatenationReplacerA = new Regex(
+        private readonly Regex mConcatenationReplacerA = new(
             @"(?<='[^']*'\s*)\+",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -85,7 +85,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// It matches single quoted text preceded by a plus sign (including + '')
         /// </summary>
         /// <remarks>This Regex uses positive lookahead to find the quoted text after the plus sign</remarks>
-        private readonly Regex mConcatenationReplacerB = new Regex(
+        private readonly Regex mConcatenationReplacerB = new(
             @"\+(?=\s*'[^']*')",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -93,7 +93,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This is used to switch from + to || for string concatenation
         /// It matches single quoted text preceded by a plus sign (including + '')
         /// </summary>
-        private readonly Regex mLenFunctionUpdater = new Regex(
+        private readonly Regex mLenFunctionUpdater = new(
             @"\bLen\s*\(",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -101,14 +101,14 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This is used to switch from CharIndex('text', 'TextToSearch') to
         /// position('Text' in 'TextToSearch')
         /// </summary>
-        private readonly Regex mCharIndexUpdater = new Regex(
+        private readonly Regex mCharIndexUpdater = new(
             @"CharIndex\s*\(\s*(?<TextToFind>[^)]+)\s*,\s*(?<TextToSearch>[^)]+)\s*\)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This is used to switch from Convert(DataType, @Variable) to  _Variable::DataType
         /// </summary>
-        private readonly Regex mConvertDataTypeUpdater = new Regex(
+        private readonly Regex mConvertDataTypeUpdater = new(
             @"Convert\s*\(\s*(?<DataType>[^,]+)+\s*,\s*[@_](?<VariableName>[^\s]+)\s*\)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -116,7 +116,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This is used to find SQL Server variable names (which start with @)
         /// It uses negative look behind to avoid matching @@error
         /// </summary>
-        private readonly Regex mVariableNameMatcher = new Regex(
+        private readonly Regex mVariableNameMatcher = new(
             @"(?<!@)@(?<FirstCharacter>[a-z0-9_])(?<RemainingCharacters>[^\s]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -124,28 +124,28 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This is used to find text that starts with @ plus the next letter, number, or underscore
         /// It uses negative look behind to avoid matching @@error
         /// </summary>
-        private readonly Regex mVariableStartMatcher = new Regex(
+        private readonly Regex mVariableStartMatcher = new(
             @"(?<!@)@(?<FirstCharacter>[a-z0-9_])",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This is used to find fields declared as Identity(1,1)
         /// </summary>
-        private readonly Regex mIdentityFieldMatcher = new Regex(
+        private readonly Regex mIdentityFieldMatcher = new(
             @"(Identity\s*\(1,1\)\s*NOT NULL|Not Null Identity\s*\(1,1\)|Identity\s*\(1,1\))",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This is used to find cases where the LIKE keyword is followed by text in quotes were a square bracket is used to denote a character class
         /// </summary>
-        private readonly Regex mLikeCharacterClassMatcher = new Regex(
+        private readonly Regex mLikeCharacterClassMatcher = new(
             @"LIKE(?<ComparisonSpec>\s+'[^']*[[][^']*')",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// This is used to find UPDATE or DELETE queries
         /// </summary>
-        private readonly Regex mUpdateOrDeleteQueryMatcher = new Regex(
+        private readonly Regex mUpdateOrDeleteQueryMatcher = new(
             @"^\s*(?<QueryType>UPDATE|DELETE)\s+(?<TargetTable>[^ ]+)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 

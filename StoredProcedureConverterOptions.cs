@@ -40,7 +40,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// List of stored procedures to skip when converting the source file
         /// </summary>
-        public SortedSet<string> StoredProcedureNamesToSkip { get; } = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        public SortedSet<string> StoredProcedureNamesToSkip { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         [Option("StoredProceduresToSkip", "SkipList", HelpShowsDefault = false,
             HelpText = "Comma separated list of stored procedure names to skip while converting the source file")]
