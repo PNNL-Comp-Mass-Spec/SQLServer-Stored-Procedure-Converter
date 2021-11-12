@@ -28,29 +28,33 @@ namespace SQLServer_Stored_Procedure_Converter
                 ProgramInfo = "This program converts SQL Server stored procedures to PostgreSQL compatible stored procedures. " +
                               "The converted procedures will typically need additional manual adjustments to become usable.",
 
-                ContactInfo = "Program written by Matthew Monroe for the Department of Energy" + Environment.NewLine +
-                              "(PNNL, Richland, WA) in 2020" +
+                ContactInfo = "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
                               Environment.NewLine + Environment.NewLine +
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
                               "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
 
-                UsageExamples = {
-                        exeName +
-                        " StoredProcedures_SQLServer.sql",
-                        exeName +
-                        " StoredProcedures_SQLServer.sql /O:StoredProcedures_postgres.sql"
-                    }
+                UsageExamples =
+                {
+                        exeName + " StoredProcedures_SQLServer.sql",
+                        exeName + " StoredProcedures_SQLServer.sql /O:StoredProcedures_postgres.sql"
+                }
             };
 
             parser.AddParamFileKey("Conf");
 
-            var parseResults = parser.ParseArgs(args);
-            var options = parseResults.ParsedResults;
+            var result = parser.ParseArgs(args);
+            var options = result.ParsedResults;
 
             try
             {
-                if (!parseResults.Success)
+                if (!result.Success)
                 {
+                    if (parser.CreateParamFileProvided)
+                    {
+                        return 0;
+                    }
+
+                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                     Thread.Sleep(1500);
                     return -1;
                 }
