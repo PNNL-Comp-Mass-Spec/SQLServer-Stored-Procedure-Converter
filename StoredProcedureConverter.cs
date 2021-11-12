@@ -125,7 +125,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// It uses negative look behind to avoid matching @@error
         /// </summary>
         private readonly Regex mVariableStartMatcher = new(
-            @"(?<!@)@(?<FirstCharacter>[a-z0-9_])",
+            "(?<!@)@(?<FirstCharacter>[a-z0-9_])",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -335,7 +335,7 @@ namespace SQLServer_Stored_Procedure_Converter
             var mapReader = new NameMapReader();
             RegisterEvents(mapReader);
 
-            var defaultSchema = "public";
+            const string defaultSchema = "public";
 
             return mapReader.LoadSqlServerToPgSqlColumnMapFile(
                 mapFile,
@@ -697,8 +697,8 @@ namespace SQLServer_Stored_Procedure_Converter
                         );
                     }
 
-                    dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
-                    dataLine = ReplaceText(dataLine, @"#IX", "IX");
+                    dataLine = ReplaceText(dataLine, "#Tmp", "Tmp");
+                    dataLine = ReplaceText(dataLine, "#IX", "IX");
 
                     dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.udf_append_to_text");
 
@@ -1279,7 +1279,7 @@ namespace SQLServer_Stored_Procedure_Converter
             // Replace tabs with spaces
             // However, handle spaces in the stored procedure comment block specially
 
-            dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
+            dataLine = ReplaceText(dataLine, "#Tmp", "Tmp");
             dataLine = UpdateVariableNames(dataLine);
 
             var labelMatch = mCommentBlockLabelMatcher.Match(dataLine);
