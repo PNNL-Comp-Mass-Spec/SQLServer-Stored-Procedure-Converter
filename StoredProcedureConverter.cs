@@ -167,7 +167,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
         /// <summary>
         /// Add a line to the procedure body, replacing tabs with spaces
-        /// </summary>f
+        /// </summary>
         /// <param name="procedureBody"></param>
         /// <param name="dataLine"></param>
         private void AppendLine(ICollection<string> procedureBody, string dataLine)
@@ -289,7 +289,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// Return true if the line is whitespace, or starts with --, Begin, If, or Else
         /// </summary>
         /// <param name="dataLine"></param>
-        /// <returns></returns>
         private static bool IsBlockBoundary(string dataLine)
         {
             return
@@ -313,12 +312,10 @@ namespace SQLServer_Stored_Procedure_Converter
         /// and values are a Dictionary of mappings of original column names to new column names in PostgreSQL;
         /// names should not have double quotes around them
         /// </param>
-        /// <returns></returns>
         private bool LoadColumnNameMapFile(
             out Dictionary<string, WordReplacer> tableNameMap,
             out Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap)
         {
-
             if (string.IsNullOrWhiteSpace(mOptions.ColumnNameMapFile))
             {
                 tableNameMap = new Dictionary<string, WordReplacer>();
@@ -1497,7 +1494,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// Also change to camelCase
         /// </summary>
         /// <param name="dataLine"></param>
-        /// <returns></returns>
         private string UpdateVariableNames(string dataLine)
         {
             if (!dataLine.Contains("@"))
@@ -1512,7 +1508,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// Also change to camelCase
         /// </summary>
         /// <param name="dataLine"></param>
-        /// <returns></returns>
         private string UpdateVariablePrefix(string dataLine)
         {
             string textToCheck;
@@ -1540,7 +1535,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This method replaces the @ with _, then changes to lowercase
         /// </summary>
         /// <param name="match"></param>
-        /// <returns></returns>
         private static string UpdateVariablePrefixEvaluator(Match match)
         {
             return match.Result("_$1").ToLower();
@@ -1550,7 +1544,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// This method replaces the @ with _, then changes to lowercase
         /// </summary>
         /// <param name="match"></param>
-        /// <returns></returns>
         private static string UpdateVariableNameEvaluator(Match match)
         {
             return match.Result("_$1").ToLower() + match.Result("$2");
