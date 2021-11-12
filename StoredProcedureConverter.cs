@@ -459,7 +459,6 @@ namespace SQLServer_Stored_Procedure_Converter
                 var skipNextLineIfGo = false;
                 var insideDateBlock = false;
 
-                var previousTrimmedLine = string.Empty;
                 var trimmedLine = string.Empty;
 
                 var mostRecentUpdateOrDeleteType = string.Empty;
@@ -489,7 +488,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (dataLine == null)
                             continue;
 
-                        previousTrimmedLine = string.Copy(trimmedLine);
+                        var previousTrimmedLine = string.Copy(trimmedLine);
                         trimmedLine = dataLine.Trim();
 
                         if (trimmedLine.Contains("Custom SQL to find"))
