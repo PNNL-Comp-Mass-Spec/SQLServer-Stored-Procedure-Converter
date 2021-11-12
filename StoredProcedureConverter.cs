@@ -596,7 +596,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         {
                             // Skip this line that we traditionally have included as boilerplate
                             ReadAndCacheLines(reader, cachedLines, 1);
-                            if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
+                            if (cachedLines.Count > 0 && cachedLines.Peek().Trim().Equals("**"))
                             {
                                 // The next line is just "**"
                                 // Skip it too
@@ -613,7 +613,7 @@ namespace SQLServer_Stored_Procedure_Converter
                             if (lineAfterAsterisks.Equals("Parameters:", StringComparison.OrdinalIgnoreCase))
                             {
                                 ReadAndCacheLines(reader, cachedLines, 1);
-                                if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
+                                if (cachedLines.Count > 0 && cachedLines.Peek().Trim().Equals("**"))
                                 {
                                     // The next line is just "**"
                                     // Skip this line and the next one
@@ -769,7 +769,7 @@ namespace SQLServer_Stored_Procedure_Converter
                             case ControlBlockTypes.If:
                                 // If the next line is ELSE, skip this END statement
                                 ReadAndCacheLines(reader, cachedLines, 1);
-                                if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Else", StringComparison.OrdinalIgnoreCase))
+                                if (cachedLines.Count > 0 && cachedLines.Peek().Trim().StartsWith("Else", StringComparison.OrdinalIgnoreCase))
                                 {
                                     var elseLine = ReplaceText(cachedLines.Dequeue(), "else", "Else");
                                     UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, elseLine);
@@ -878,7 +878,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         // If the next line starts with BEGIN, skip it
                         // (since PostgreSQL syntax does not use Begin at the start of While Loops, only at the start of multi-line If blocks)
                         ReadAndCacheLines(reader, cachedLines, 1);
-                        if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
+                        if (cachedLines.Count > 0 && cachedLines.Peek().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
                         {
                             cachedLines.Dequeue();
                         }
@@ -1050,7 +1050,7 @@ namespace SQLServer_Stored_Procedure_Converter
             if (cachedLines.Count == 0)
                 return false;
 
-            if (!cachedLines.First().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
+            if (!cachedLines.Peek().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
                 return false;
 
             // The next line starts with Begin
@@ -1198,7 +1198,7 @@ namespace SQLServer_Stored_Procedure_Converter
         private void SkipNextLineIfBlank(StreamReader reader, Queue<string> cachedLines)
         {
             ReadAndCacheLines(reader, cachedLines, 1);
-            if (cachedLines.Count > 0 && string.IsNullOrWhiteSpace(cachedLines.First()))
+            if (cachedLines.Count > 0 && string.IsNullOrWhiteSpace(cachedLines.Peek()))
             {
                 cachedLines.Dequeue();
             }
