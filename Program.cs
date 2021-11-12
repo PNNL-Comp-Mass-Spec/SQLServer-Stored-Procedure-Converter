@@ -32,7 +32,7 @@ namespace SQLServer_Stored_Procedure_Converter
                               "(PNNL, Richland, WA) in 2020" +
                               Environment.NewLine + Environment.NewLine +
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                              "Website: https://panomics.pnnl.gov/ or https://omics.pnl.gov",
+                              "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
 
                 UsageExamples = {
                         exeName +

@@ -62,12 +62,12 @@ Use `/CreateParamFile` to create an example parameter file
 
 Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) \
 E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov\
-Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/ \
+Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics/
 Source code: https://github.com/PNNL-Comp-Mass-Spec/SQLServer-Stored-Procedure-Converter
 
 ## License
 
-Licensed under the 2-Clause BSD License; you may not use this file except
+Licensed under the 2-Clause BSD License; you may not use this program except
 in compliance with the License.  You may obtain a copy of the License at
 https://opensource.org/licenses/BSD-2-Clause
 
