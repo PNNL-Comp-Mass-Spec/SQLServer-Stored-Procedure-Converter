@@ -316,7 +316,6 @@ namespace SQLServer_Stored_Procedure_Converter
             out Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap)
         {
 
-
             if (string.IsNullOrWhiteSpace(mOptions.ColumnNameMapFile))
             {
                 tableNameMap = new Dictionary<string, WordReplacer>();
@@ -431,7 +430,6 @@ namespace SQLServer_Stored_Procedure_Converter
                     @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=\s*@@rowcount",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-
                 // This is used to update SELECT statements that assign a value to a variable
                 var selectAssignVariableMatcher = new Regex(
                     @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=\s*(?<SourceColumn>.+)",
@@ -543,7 +541,6 @@ namespace SQLServer_Stored_Procedure_Converter
                                 }
                                 else
                                 {
-
                                     if (storedProcedureInfo.IsFunction)
                                         OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
                                     else
@@ -971,7 +968,6 @@ namespace SQLServer_Stored_Procedure_Converter
                                 updateQueryWarnings.Add("                       ToDo: Fix this query");
                                 updateQueryWarnings.Add(string.Empty);
 
-
                                 foreach (var item in updateQueryWarnings)
                                 {
                                     if (item.Length > 0)
@@ -987,7 +983,6 @@ namespace SQLServer_Stored_Procedure_Converter
                         // Normal line of code (or whitespace); append it to the body
                         UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
                     }
-
                 }
 
                 return true;
@@ -1047,7 +1042,6 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 index = blockStartIndex + updatedBlock.Count;
             }
-
         }
 
         private bool FindTablesByName(
@@ -1084,7 +1078,6 @@ namespace SQLServer_Stored_Procedure_Converter
 
             AppendLineComment(procedureBody, beginStatement);
             return true;
-
         }
 
         private void ReadAndCacheLines(StreamReader reader, Queue<string> cachedLines, int countToRead)
@@ -1199,7 +1192,6 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private bool SkipLine(string dataLine, out bool skipNextLineIfGo)
         {
-
             if (dataLine.Equals("AS", StringComparison.OrdinalIgnoreCase) ||
                 dataLine.Equals("GO", StringComparison.OrdinalIgnoreCase) ||
                 mSetNoCountMatcher.Match(dataLine).Success ||
@@ -1243,7 +1235,6 @@ namespace SQLServer_Stored_Procedure_Converter
 
         private void StoreProcedureArgument(StoredProcedureDDL storedProcedureInfo, string dataLine)
         {
-
             if (string.IsNullOrWhiteSpace(dataLine))
                 return;
 

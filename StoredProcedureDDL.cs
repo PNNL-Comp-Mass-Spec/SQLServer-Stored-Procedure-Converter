@@ -133,7 +133,6 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 if (ProcedureArgumentComments.Count > 0)
                 {
-
                     if (item.StartsWith("**  Auth:"))
                     {
                         WriteArgumentComments(writer);

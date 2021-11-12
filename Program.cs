@@ -67,7 +67,6 @@ namespace SQLServer_Stored_Procedure_Converter
                 }
 
                 options.OutputSetOptions();
-
             }
             catch (Exception e)
             {
@@ -97,7 +96,6 @@ namespace SQLServer_Stored_Procedure_Converter
                 ConsoleMsgUtils.ShowWarning("Processing error");
                 Thread.Sleep(2000);
                 return -1;
-
             }
             catch (Exception ex)
             {
@@ -105,7 +103,6 @@ namespace SQLServer_Stored_Procedure_Converter
                 Thread.Sleep(2000);
                 return -1;
             }
-
         }
 
         private static void Processor_DebugEvent(string message)
@@ -122,6 +119,5 @@ namespace SQLServer_Stored_Procedure_Converter
             mLastProgressTime = DateTime.UtcNow;
             Processor_DebugEvent(percentComplete.ToString("0.0") + "%, " + progressMessage);
         }
-
     }
 }
