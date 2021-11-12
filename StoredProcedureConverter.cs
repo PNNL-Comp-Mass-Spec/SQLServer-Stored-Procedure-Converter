@@ -469,367 +469,389 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 var storedProcedureInfo = new StoredProcedureDDL(string.Empty);
 
-                using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(outputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var writer = new StreamWriter(new FileStream(outputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    string dataLine;
+                    if (cachedLines.Count > 0)
                     {
-                        string dataLine;
-                        if (cachedLines.Count > 0)
+                        dataLine = cachedLines.Dequeue();
+                    }
+                    else
+                    {
+                        dataLine = reader.ReadLine();
+                    }
+
+                    // Skip lines that are null, but don't skip blank lines
+                    if (dataLine == null)
+                        continue;
+
+                    var previousTrimmedLine = string.Copy(trimmedLine);
+                    trimmedLine = dataLine.Trim();
+
+                    if (trimmedLine.Contains("Custom SQL to find"))
+                        Console.WriteLine("Check this code");
+
+                    // Skip lines that assign 0 to @myError
+                    if (trimmedLine.Equals("Set @myError = 0", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    // If the previous line was "Declare @myRowCount" or "Declare @myError", skip lines that assign 0 to @myRowCount
+                    if (trimmedLine.Equals("Set @myRowCount = 0", StringComparison.OrdinalIgnoreCase) &&
+                        (previousTrimmedLine.StartsWith("Declare @myRowCount", StringComparison.OrdinalIgnoreCase) ||
+                         previousTrimmedLine.StartsWith("Declare @myError", StringComparison.OrdinalIgnoreCase) ||
+                         previousTrimmedLine.StartsWith("Set @myError = 0", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue;
+                    }
+
+                    if (skipNextLineIfGo && dataLine.StartsWith("GO", StringComparison.OrdinalIgnoreCase))
+                    {
+                        SkipNextLineIfBlank(reader, cachedLines);
+                        skipNextLineIfGo = false;
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(mostRecentUpdateOrDeleteTable) && string.IsNullOrWhiteSpace(trimmedLine))
+                    {
+                        mostRecentUpdateOrDeleteTable = string.Empty;
+                    }
+
+                    if (SkipLine(dataLine, out skipNextLineIfGo))
+                        continue;
+
+                    if (dataLine.StartsWith("CREATE PROCEDURE", StringComparison.OrdinalIgnoreCase) ||
+                        dataLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!string.IsNullOrWhiteSpace(storedProcedureInfo.ProcedureName))
                         {
-                            dataLine = cachedLines.Dequeue();
-                        }
-                        else
-                        {
-                            dataLine = reader.ReadLine();
-                        }
-
-                        // Skip lines that are null, but don't skip blank lines
-                        if (dataLine == null)
-                            continue;
-
-                        var previousTrimmedLine = string.Copy(trimmedLine);
-                        trimmedLine = dataLine.Trim();
-
-                        if (trimmedLine.Contains("Custom SQL to find"))
-                            Console.WriteLine("Check this code");
-
-                        // Skip lines that assign 0 to @myError
-                        if (trimmedLine.Equals("Set @myError = 0", StringComparison.OrdinalIgnoreCase))
-                            continue;
-
-                        // If the previous line was "Declare @myRowCount" or "Declare @myError", skip lines that assign 0 to @myRowCount
-                        if (trimmedLine.Equals("Set @myRowCount = 0", StringComparison.OrdinalIgnoreCase) &&
-                            (previousTrimmedLine.StartsWith("Declare @myRowCount", StringComparison.OrdinalIgnoreCase) ||
-                             previousTrimmedLine.StartsWith("Declare @myError", StringComparison.OrdinalIgnoreCase) ||
-                             previousTrimmedLine.StartsWith("Set @myError = 0", StringComparison.OrdinalIgnoreCase)))
-                        {
-                            continue;
-                        }
-
-                        if (skipNextLineIfGo && dataLine.StartsWith("GO", StringComparison.OrdinalIgnoreCase))
-                        {
-                            SkipNextLineIfBlank(reader, cachedLines);
-                            skipNextLineIfGo = false;
-                            continue;
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(mostRecentUpdateOrDeleteTable) && string.IsNullOrWhiteSpace(trimmedLine))
-                        {
-                            mostRecentUpdateOrDeleteTable = string.Empty;
-                        }
-
-                        if (SkipLine(dataLine, out skipNextLineIfGo))
-                            continue;
-
-                        if (dataLine.StartsWith("CREATE PROCEDURE", StringComparison.OrdinalIgnoreCase) ||
-                            dataLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (!string.IsNullOrWhiteSpace(storedProcedureInfo.ProcedureName))
+                            var procedureNameWithoutSchema = StoredProcedureDDL.GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
+                            if (mOptions.StoredProcedureNamesToSkip.Contains(procedureNameWithoutSchema))
                             {
-                                var procedureNameWithoutSchema = StoredProcedureDDL.GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
-                                if (mOptions.StoredProcedureNamesToSkip.Contains(procedureNameWithoutSchema))
-                                {
-                                    OnStatusEvent("Skipping " + storedProcedureInfo.ProcedureName);
-                                }
-                                else
-                                {
-                                    if (storedProcedureInfo.IsFunction)
-                                        OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
-                                    else
-                                        OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
-
-                                    UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap, updateSchemaOnTables);
-
-                                    // Write out the previous procedure (or function)
-                                    storedProcedureInfo.ToWriterForPostgres(writer);
-                                }
-                            }
-
-                            // Reset the tracking variables
-                            foundStartOfProcedureCommentBlock = false;
-                            foundEndOfProcedureCommentBlock = false;
-                            foundArgumentListStart = false;
-                            foundArgumentListEnd = false;
-
-                            skipNextLineIfGo = false;
-                            controlBlockStack.Clear();
-
-                            var isFunction = dataLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase);
-
-                            var createKeywords = isFunction ? "CREATE FUNCTION" : "CREATE PROCEDURE";
-
-                            var matchedName = procedureNameMatcher.Match(dataLine);
-                            string procedureNameWithSchema;
-                            if (matchedName.Success)
-                            {
-                                procedureNameWithSchema = schemaName + "." + matchedName.Groups["ProcedureName"].Value;
+                                OnStatusEvent("Skipping " + storedProcedureInfo.ProcedureName);
                             }
                             else
                             {
-                                procedureNameWithSchema = schemaName + "." + dataLine.Substring(createKeywords.Length + 1);
-                            }
+                                if (storedProcedureInfo.IsFunction)
+                                    OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
+                                else
+                                    OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
 
-                            storedProcedureInfo.Reset(procedureNameWithSchema, isFunction);
-                            continue;
+                                UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap, updateSchemaOnTables);
+
+                                // Write out the previous procedure (or function)
+                                storedProcedureInfo.ToWriterForPostgres(writer);
+                            }
                         }
 
-                        if (!foundStartOfProcedureCommentBlock && dataLine.StartsWith("/*****************"))
+                        // Reset the tracking variables
+                        foundStartOfProcedureCommentBlock = false;
+                        foundEndOfProcedureCommentBlock = false;
+                        foundArgumentListStart = false;
+                        foundArgumentListEnd = false;
+
+                        skipNextLineIfGo = false;
+                        controlBlockStack.Clear();
+
+                        var isFunction = dataLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase);
+
+                        var createKeywords = isFunction ? "CREATE FUNCTION" : "CREATE PROCEDURE";
+
+                        var matchedName = procedureNameMatcher.Match(dataLine);
+                        string procedureNameWithSchema;
+                        if (matchedName.Success)
                         {
-                            foundStartOfProcedureCommentBlock = true;
+                            procedureNameWithSchema = schemaName + "." + matchedName.Groups["ProcedureName"].Value;
+                        }
+                        else
+                        {
+                            procedureNameWithSchema = schemaName + "." + dataLine.Substring(createKeywords.Length + 1);
+                        }
+
+                        storedProcedureInfo.Reset(procedureNameWithSchema, isFunction);
+                        continue;
+                    }
+
+                    if (!foundStartOfProcedureCommentBlock && dataLine.StartsWith("/*****************"))
+                    {
+                        foundStartOfProcedureCommentBlock = true;
+                        insideDateBlock = false;
+                        storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
+                        continue;
+                    }
+
+                    if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock && dataLine.EndsWith("*****************/"))
+                    {
+                        foundEndOfProcedureCommentBlock = true;
+                        if (insideDateBlock)
+                        {
+                            storedProcedureInfo.ProcedureCommentBlock.Add(string.Format(
+                                "**          {0:MM/dd/yyyy} mem - Ported to PostgreSQL",
+                                DateTime.Now));
                             insideDateBlock = false;
-                            storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
-                            continue;
                         }
 
-                        if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock && dataLine.EndsWith("*****************/"))
+                        storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
+                        continue;
+                    }
+
+                    if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock)
+                    {
+                        if (dataLine.IndexOf("Return values: 0: success, otherwise, error code", StringComparison.OrdinalIgnoreCase) > 0 ||
+                            dataLine.IndexOf("Return values: 0 if no error; otherwise error code", StringComparison.OrdinalIgnoreCase) > 0)
                         {
-                            foundEndOfProcedureCommentBlock = true;
-                            if (insideDateBlock)
+                            // Skip this line that we traditionally have included as boilerplate
+                            ReadAndCacheLines(reader, cachedLines, 1);
+                            if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
                             {
-                                storedProcedureInfo.ProcedureCommentBlock.Add(string.Format(
-                                    "**          {0:MM/dd/yyyy} mem - Ported to PostgreSQL",
-                                    DateTime.Now));
-                                insideDateBlock = false;
+                                // The next line is just "**"
+                                // Skip it too
+                                cachedLines.Dequeue();
                             }
 
-                            storedProcedureInfo.ProcedureCommentBlock.Add(ReplaceTabs(dataLine));
                             continue;
                         }
 
-                        if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock)
+                        if (dataLine.IndexOf("Parameters:", StringComparison.OrdinalIgnoreCase) > 1)
                         {
-                            if (dataLine.IndexOf("Return values: 0: success, otherwise, error code", StringComparison.OrdinalIgnoreCase) > 0 ||
-                                dataLine.IndexOf("Return values: 0 if no error; otherwise error code", StringComparison.OrdinalIgnoreCase) > 0)
+                            // Skip lines of the form "**  Parameters:" if the next line is blank
+                            var lineAfterAsterisks = dataLine.Substring(2).Trim();
+                            if (lineAfterAsterisks.Equals("Parameters:", StringComparison.OrdinalIgnoreCase))
                             {
-                                // Skip this line that we traditionally have included as boilerplate
                                 ReadAndCacheLines(reader, cachedLines, 1);
                                 if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
                                 {
                                     // The next line is just "**"
-                                    // Skip it too
+                                    // Skip this line and the next one
                                     cachedLines.Dequeue();
+                                    continue;
                                 }
-
-                                continue;
                             }
+                        }
 
-                            if (dataLine.IndexOf("Parameters:", StringComparison.OrdinalIgnoreCase) > 1)
-                            {
-                                // Skip lines of the form "**  Parameters:" if the next line is blank
-                                var lineAfterAsterisks = dataLine.Substring(2).Trim();
-                                if (lineAfterAsterisks.Equals("Parameters:", StringComparison.OrdinalIgnoreCase))
+                        if (insideDateBlock && trimmedLine.Equals("**"))
+                        {
+                            storedProcedureInfo.ProcedureCommentBlock.Add(string.Format(
+                                "**          {0:MM/dd/yyyy} mem - Ported to PostgreSQL",
+                                DateTime.Now));
+                            insideDateBlock = false;
+                        }
+
+                        StoreProcedureCommentLine(storedProcedureInfo, dataLine, out var startOfDateBlock);
+                        if (startOfDateBlock)
+                        {
+                            insideDateBlock = true;
+                        }
+
+                        continue;
+                    }
+
+                    if (!foundArgumentListStart && dataLine.StartsWith("("))
+                    {
+                        foundArgumentListStart = true;
+                        continue;
+                    }
+
+                    if (foundArgumentListStart && !foundArgumentListEnd && dataLine.StartsWith(")"))
+                    {
+                        foundArgumentListEnd = true;
+                        continue;
+                    }
+
+                    if (foundArgumentListStart && !foundArgumentListEnd)
+                    {
+                        // Inside the argument list
+                        StoreProcedureArgument(storedProcedureInfo, dataLine);
+                        continue;
+                    }
+
+                    // Perform some standard text replacements using ReplaceText
+                    // It performs a case-insensitive search/replace and it supports Regex
+
+                    dataLine = ReplaceText(dataLine, @"\bIsNull\b", "Coalesce");
+
+                    dataLine = ReplaceText(dataLine, @"\bDatetime\b", "timestamp");
+
+                    dataLine = ReplaceText(dataLine, @"\bGetDate\b\s*\(\)", "CURRENT_TIMESTAMP");
+
+                    // Stored procedures with smallint parameters are harder to call, since you have to explicitly cast numbers to ::smallint
+                    // Thus, replace both tinyint and smallint with int (aka integer or int4)
+                    dataLine = ReplaceText(dataLine, @"\b(tinyint|smallint)\b", "int");
+
+                    // ReSharper disable CommentTypo
+
+                    // This matches user_name(), suser_name(), or suser_sname()
+                    dataLine = ReplaceText(dataLine, @"\bs*user_s*name\b\s*\(\)", "session_user");
+
+                    // ReSharper restore CommentTypo
+
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedList", "public.udf_parse_delimited_list");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromList", "public.udf_parse_delimited_list");
+
+                    var createTempTableMatch = createTempTableMatcher.Match(dataLine);
+                    if (createTempTableMatch.Success)
+                    {
+                        dataLine = string.Format(
+                            "{0}DROP TABLE IF EXISTS {1};{2}{2}" +
+                            "{0}CREATE TEMP TABLE {1}{3}",
+                            createTempTableMatch.Groups["LeadingWhitespace"],
+                            createTempTableMatch.Groups["TempTableName"],
+                            Environment.NewLine,
+                            createTempTableMatch.Groups["ExtraInfo"]
+                        );
+                    }
+
+                    dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
+                    dataLine = ReplaceText(dataLine, @"#IX", "IX");
+
+                    dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.udf_append_to_text");
+
+                    var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
+                    if (declareAndAssignMatch.Success)
+                    {
+                        StoreVariableToDeclare(storedProcedureInfo, declareAndAssignMatch);
+                        continue;
+                    }
+
+                    var declareMatch = declareMatcher.Match(dataLine);
+                    if (declareMatch.Success)
+                    {
+                        StoreVariableToDeclare(storedProcedureInfo, declareMatch);
+                        continue;
+                    }
+
+                    var assignVariableMatch = mSetStatementMatcher.Match(dataLine);
+                    if (assignVariableMatch.Success)
+                    {
+                        StoreSetStatement(storedProcedureInfo.ProcedureBody, assignVariableMatch);
+                        continue;
+                    }
+
+                    var printVariableMatch = printVariableMatcher.Match(dataLine);
+                    if (printVariableMatch.Success)
+                    {
+                        StorePrintVariable(storedProcedureInfo.ProcedureBody, printVariableMatch);
+                        continue;
+                    }
+
+                    var selectRowcountMatch = selectRowCountMatcher.Match(dataLine);
+                    if (selectRowcountMatch.Success)
+                    {
+                        StoreSelectRowCount(storedProcedureInfo.ProcedureBody, selectRowcountMatch);
+                        continue;
+                    }
+
+                    var selectAssignVariableMatch = selectAssignVariableMatcher.Match(dataLine);
+                    if (selectAssignVariableMatch.Success)
+                    {
+                        StoreSelectAssignVariable(storedProcedureInfo.ProcedureBody, selectAssignVariableMatch);
+                        continue;
+                    }
+
+                    var identityFieldMatch = mIdentityFieldMatcher.Match(dataLine);
+                    if (identityFieldMatch.Success)
+                    {
+                        dataLine = mIdentityFieldMatcher.Replace(dataLine, "PRIMARY KEY GENERATED ALWAYS AS IDENTITY");
+                    }
+
+                    var likeCharacterClassMatch = mLikeCharacterClassMatcher.Match(dataLine);
+                    if (likeCharacterClassMatch.Success)
+                    {
+                        dataLine = mLikeCharacterClassMatcher.Replace(dataLine, "SIMILAR TO$1");
+                    }
+
+                    var endMatch = endStatementMatcher.Match(dataLine);
+                    if (endMatch.Success && controlBlockStack.Count > 0)
+                    {
+                        var leadingWhitespace = endMatch.Groups["LeadingWhitespace"].Value;
+
+                        var extraInfo = endMatch.Groups["ExtraInfo"].Value;
+
+                        var controlBlock = controlBlockStack.Pop();
+                        switch (controlBlock)
+                        {
+                            case ControlBlockTypes.If:
+                                // If the next line is ELSE, skip this END statement
+                                ReadAndCacheLines(reader, cachedLines, 1);
+                                if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Else", StringComparison.OrdinalIgnoreCase))
                                 {
+                                    var elseLine = ReplaceText(cachedLines.Dequeue(), "else", "Else");
+                                    UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, elseLine);
+
                                     ReadAndCacheLines(reader, cachedLines, 1);
-                                    if (cachedLines.Count > 0 && cachedLines.First().Trim().Equals("**"))
+
+                                    // Look for Begin on the next line
+                                    // If found, push ControlBlockTypes.If onto the stack
+                                    // Skip the line if no comment; otherwise, write the comment
+                                    if (NextCachedLineIsBegin(cachedLines, storedProcedureInfo.ProcedureBody, controlBlockStack))
                                     {
-                                        // The next line is just "**"
-                                        // Skip this line and the next one
-                                        cachedLines.Dequeue();
                                         continue;
                                     }
+
+                                    if (cachedLines.Count > 0)
+                                    {
+                                        // The next line does not start Begin
+                                        //   1) Write the next line (rename variables and change = to := if necessary)
+                                        //   2) Write End If;
+                                        var nextLine = cachedLines.Dequeue();
+                                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, nextLine + ";");
+
+                                        AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End If;");
+                                    }
+
+                                    continue;
                                 }
-                            }
 
-                            if (insideDateBlock && trimmedLine.Equals("**"))
-                            {
-                                storedProcedureInfo.ProcedureCommentBlock.Add(string.Format(
-                                    "**          {0:MM/dd/yyyy} mem - Ported to PostgreSQL",
-                                    DateTime.Now));
-                                insideDateBlock = false;
-                            }
-
-                            StoreProcedureCommentLine(storedProcedureInfo, dataLine, out var startOfDateBlock);
-                            if (startOfDateBlock)
-                            {
-                                insideDateBlock = true;
-                            }
-
-                            continue;
-                        }
-
-                        if (!foundArgumentListStart && dataLine.StartsWith("("))
-                        {
-                            foundArgumentListStart = true;
-                            continue;
-                        }
-
-                        if (foundArgumentListStart && !foundArgumentListEnd && dataLine.StartsWith(")"))
-                        {
-                            foundArgumentListEnd = true;
-                            continue;
-                        }
-
-                        if (foundArgumentListStart && !foundArgumentListEnd)
-                        {
-                            // Inside the argument list
-                            StoreProcedureArgument(storedProcedureInfo, dataLine);
-                            continue;
-                        }
-
-                        // Perform some standard text replacements using ReplaceText
-                        // It performs a case-insensitive search/replace and it supports Regex
-
-                        dataLine = ReplaceText(dataLine, @"\bIsNull\b", "Coalesce");
-
-                        dataLine = ReplaceText(dataLine, @"\bDatetime\b", "timestamp");
-
-                        dataLine = ReplaceText(dataLine, @"\bGetDate\b\s*\(\)", "CURRENT_TIMESTAMP");
-
-                        // Stored procedures with smallint parameters are harder to call, since you have to explicitly cast numbers to ::smallint
-                        // Thus, replace both tinyint and smallint with int (aka integer or int4)
-                        dataLine = ReplaceText(dataLine, @"\b(tinyint|smallint)\b", "int");
-
-                        // ReSharper disable CommentTypo
-
-                        // This matches user_name(), suser_name(), or suser_sname()
-                        dataLine = ReplaceText(dataLine, @"\bs*user_s*name\b\s*\(\)", "session_user");
-
-                        // ReSharper restore CommentTypo
-
-                        dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
-                        dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
-                        dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedList", "public.udf_parse_delimited_list");
-                        dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromList", "public.udf_parse_delimited_list");
-
-                        var createTempTableMatch = createTempTableMatcher.Match(dataLine);
-                        if (createTempTableMatch.Success)
-                        {
-                            dataLine = string.Format(
-                                "{0}DROP TABLE IF EXISTS {1};{2}{2}" +
-                                "{0}CREATE TEMP TABLE {1}{3}",
-                                createTempTableMatch.Groups["LeadingWhitespace"],
-                                createTempTableMatch.Groups["TempTableName"],
-                                Environment.NewLine,
-                                createTempTableMatch.Groups["ExtraInfo"]
-                            );
-                        }
-
-                        dataLine = ReplaceText(dataLine, @"#Tmp", "Tmp");
-                        dataLine = ReplaceText(dataLine, @"#IX", "IX");
-
-                        dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.udf_append_to_text");
-
-                        var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
-                        if (declareAndAssignMatch.Success)
-                        {
-                            StoreVariableToDeclare(storedProcedureInfo, declareAndAssignMatch);
-                            continue;
-                        }
-
-                        var declareMatch = declareMatcher.Match(dataLine);
-                        if (declareMatch.Success)
-                        {
-                            StoreVariableToDeclare(storedProcedureInfo, declareMatch);
-                            continue;
-                        }
-
-                        var assignVariableMatch = mSetStatementMatcher.Match(dataLine);
-                        if (assignVariableMatch.Success)
-                        {
-                            StoreSetStatement(storedProcedureInfo.ProcedureBody, assignVariableMatch);
-                            continue;
-                        }
-
-                        var printVariableMatch = printVariableMatcher.Match(dataLine);
-                        if (printVariableMatch.Success)
-                        {
-                            StorePrintVariable(storedProcedureInfo.ProcedureBody, printVariableMatch);
-                            continue;
-                        }
-
-                        var selectRowcountMatch = selectRowCountMatcher.Match(dataLine);
-                        if (selectRowcountMatch.Success)
-                        {
-                            StoreSelectRowCount(storedProcedureInfo.ProcedureBody, selectRowcountMatch);
-                            continue;
-                        }
-
-                        var selectAssignVariableMatch = selectAssignVariableMatcher.Match(dataLine);
-                        if (selectAssignVariableMatch.Success)
-                        {
-                            StoreSelectAssignVariable(storedProcedureInfo.ProcedureBody, selectAssignVariableMatch);
-                            continue;
-                        }
-
-                        var identityFieldMatch = mIdentityFieldMatcher.Match(dataLine);
-                        if (identityFieldMatch.Success)
-                        {
-                            dataLine = mIdentityFieldMatcher.Replace(dataLine, "PRIMARY KEY GENERATED ALWAYS AS IDENTITY");
-                        }
-
-                        var likeCharacterClassMatch = mLikeCharacterClassMatcher.Match(dataLine);
-                        if (likeCharacterClassMatch.Success)
-                        {
-                            dataLine = mLikeCharacterClassMatcher.Replace(dataLine, "SIMILAR TO$1");
-                        }
-
-                        var endMatch = endStatementMatcher.Match(dataLine);
-                        if (endMatch.Success && controlBlockStack.Count > 0)
-                        {
-                            var leadingWhitespace = endMatch.Groups["LeadingWhitespace"].Value;
-
-                            var extraInfo = endMatch.Groups["ExtraInfo"].Value;
-
-                            var controlBlock = controlBlockStack.Pop();
-                            switch (controlBlock)
-                            {
-                                case ControlBlockTypes.If:
-                                    // If the next line is ELSE, skip this END statement
-                                    ReadAndCacheLines(reader, cachedLines, 1);
-                                    if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Else", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        var elseLine = ReplaceText(cachedLines.Dequeue(), "else", "Else");
-                                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, elseLine);
-
-                                        ReadAndCacheLines(reader, cachedLines, 1);
-
-                                        // Look for Begin on the next line
-                                        // If found, push ControlBlockTypes.If onto the stack
-                                        // Skip the line if no comment; otherwise, write the comment
-                                        if (NextCachedLineIsBegin(cachedLines, storedProcedureInfo.ProcedureBody, controlBlockStack))
-                                        {
-                                            continue;
-                                        }
-
-                                        if (cachedLines.Count > 0)
-                                        {
-                                            // The next line does not start Begin
-                                            //   1) Write the next line (rename variables and change = to := if necessary)
-                                            //   2) Write End If;
-                                            var nextLine = cachedLines.Dequeue();
-                                            UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, nextLine + ";");
-
-                                            AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End If;");
-                                        }
-
-                                        continue;
-                                    }
-
-                                    AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End If;" + extraInfo);
-                                    continue;
-
-                                case ControlBlockTypes.While:
-                                    AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End Loop;" + extraInfo);
-                                    continue;
-                            }
-                        }
-
-                        if (trimmedLine.StartsWith("If ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // If statement
-                            // Change to "If ... Then"
-                            // This change assumes the If condition does not span multiple lines
-
-                            var updatedLine = UpdateFunctionNames(UpdateVariableNames(dataLine));
-                            AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Then");
-
-                            // Peek at the next two or three lines to determine what to do
-                            // The following logic does not support "ELSE IF" code; that will need to be manually updated
-
-                            ReadAndCacheLines(reader, cachedLines, 3);
-                            if (cachedLines.Count == 0)
+                                AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End If;" + extraInfo);
                                 continue;
+
+                            case ControlBlockTypes.While:
+                                AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End Loop;" + extraInfo);
+                                continue;
+                        }
+                    }
+
+                    if (trimmedLine.StartsWith("If ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // If statement
+                        // Change to "If ... Then"
+                        // This change assumes the If condition does not span multiple lines
+
+                        var updatedLine = UpdateFunctionNames(UpdateVariableNames(dataLine));
+                        AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Then");
+
+                        // Peek at the next two or three lines to determine what to do
+                        // The following logic does not support "ELSE IF" code; that will need to be manually updated
+
+                        ReadAndCacheLines(reader, cachedLines, 3);
+                        if (cachedLines.Count == 0)
+                            continue;
+
+                        // Look for Begin on the next line
+                        // If found, push ControlBlockTypes.If onto the stack
+                        // Skip the line if no comment; otherwise, write the comment
+                        if (NextCachedLineIsBegin(cachedLines, storedProcedureInfo.ProcedureBody, controlBlockStack))
+                        {
+                            continue;
+                        }
+
+                        var leadingWhitespace = GetLeadingWhitespace(dataLine);
+
+                        if (cachedLines.Count > 1 && cachedLines.Take(2).Last().Trim().StartsWith("Else", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // The line after the next line starts with Else:
+                            //   1) Write out the next line (rename variables and change = to := if necessary)
+                            //   2) Write Else
+
+                            var lineBeforeElse = cachedLines.Dequeue();
+                            UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, lineBeforeElse);
+
+                            var elseLine = ReplaceText(cachedLines.Dequeue(), "else", "Else");
+                            UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, elseLine);
 
                             // Look for Begin on the next line
                             // If found, push ControlBlockTypes.If onto the stack
@@ -838,144 +860,121 @@ namespace SQLServer_Stored_Procedure_Converter
                             {
                                 continue;
                             }
-
-                            var leadingWhitespace = GetLeadingWhitespace(dataLine);
-
-                            if (cachedLines.Count > 1 && cachedLines.Take(2).Last().Trim().StartsWith("Else", StringComparison.OrdinalIgnoreCase))
-                            {
-                                // The line after the next line starts with Else:
-                                //   1) Write out the next line (rename variables and change = to := if necessary)
-                                //   2) Write Else
-
-                                var lineBeforeElse = cachedLines.Dequeue();
-                                UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, lineBeforeElse);
-
-                                var elseLine = ReplaceText(cachedLines.Dequeue(), "else", "Else");
-                                UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, elseLine);
-
-                                // Look for Begin on the next line
-                                // If found, push ControlBlockTypes.If onto the stack
-                                // Skip the line if no comment; otherwise, write the comment
-                                if (NextCachedLineIsBegin(cachedLines, storedProcedureInfo.ProcedureBody, controlBlockStack))
-                                {
-                                    continue;
-                                }
-                            }
-
-                            // The line after the next line does not start with Else or Begin
-                            //   1) Write the next line (rename variables and change = to := if necessary)
-                            //   2) Write End If;
-                            var nextLine = cachedLines.Dequeue();
-                            UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, nextLine + ";");
-
-                            AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End If;");
-
-                            continue;
                         }
 
-                        if (trimmedLine.StartsWith("While ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // While statement
-                            // Change to "While ... Loop"
+                        // The line after the next line does not start with Else or Begin
+                        //   1) Write the next line (rename variables and change = to := if necessary)
+                        //   2) Write End If;
+                        var nextLine = cachedLines.Dequeue();
+                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, nextLine + ";");
 
-                            var updatedLine = UpdateFunctionNames(UpdateVariableNames(dataLine));
-                            AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Loop");
+                        AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "End If;");
 
-                            controlBlockStack.Push(ControlBlockTypes.While);
-
-                            // If the next line starts with BEGIN, skip it
-                            // (since PostgreSQL syntax does not use Begin at the start of While Loops, only at the start of multi-line If blocks)
-                            ReadAndCacheLines(reader, cachedLines, 1);
-                            if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
-                            {
-                                cachedLines.Dequeue();
-                            }
-
-                            continue;
-                        }
-
-                        if (trimmedLine.Equals("Goto done", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                            AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "Return;");
-
-                            continue;
-                        }
-
-                        if (trimmedLine.StartsWith("exec @myError = ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                            var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec @myError = ".Length));
-                            if (updatedLine.Contains("="))
-                                updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
-
-                            AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
-                            continue;
-                        }
-
-                        if (trimmedLine.StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                            var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec ".Length));
-                            if (updatedLine.Contains("="))
-                                updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
-
-                            AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
-                            continue;
-                        }
-
-                        var updateOrDeleteQueryMatch = mUpdateOrDeleteQueryMatcher.Match(trimmedLine);
-                        if (updateOrDeleteQueryMatch.Success)
-                        {
-                            mostRecentUpdateOrDeleteType = updateOrDeleteQueryMatch.Groups["QueryType"].Value;
-                            mostRecentUpdateOrDeleteTable = updateOrDeleteQueryMatch.Groups["TargetTable"].Value;
-                        }
-                        else
-                        {
-                            if (mostRecentUpdateOrDeleteTable.Length > 0 &&
-                                trimmedLine.StartsWith("FROM " + mostRecentUpdateOrDeleteTable, StringComparison.OrdinalIgnoreCase))
-                            {
-                                UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
-
-                                var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                                var updateQueryWarnings = new List<string>
-                                {
-                                    string.Empty,
-                                    "/********************************************************************************",
-                                    "** This " + mostRecentUpdateOrDeleteType + " query includes the target table name in the FROM clause",
-                                    "** The WHERE clause needs to have a self join to the target table, for example:",
-                                    string.Format(
-                                        "** WHERE {0}.Primary_Key_ID = {0}Aliased.Primary_Key_ID ", mostRecentUpdateOrDeleteTable)
-                                };
-
-                                if (mostRecentUpdateOrDeleteType.StartsWith("delete", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    updateQueryWarnings.Add("**");
-                                    updateQueryWarnings.Add("** Delete queries must also include the USING keyword");
-                                    updateQueryWarnings.Add("** Alternatively, the more standard approach is to rearrange the query to be similar to");
-                                    updateQueryWarnings.Add("** DELETE FROM target WHERE id in (SELECT id from ...)");
-                                }
-
-                                updateQueryWarnings.Add("********************************************************************************/");
-                                updateQueryWarnings.Add(string.Empty);
-                                updateQueryWarnings.Add("                       ToDo: Fix this query");
-                                updateQueryWarnings.Add(string.Empty);
-
-                                foreach (var item in updateQueryWarnings)
-                                {
-                                    if (item.Length > 0)
-                                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + item);
-                                    else
-                                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, item);
-                                }
-
-                                continue;
-                            }
-                        }
-
-                        // Normal line of code (or whitespace); append it to the body
-                        UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
+                        continue;
                     }
+
+                    if (trimmedLine.StartsWith("While ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // While statement
+                        // Change to "While ... Loop"
+
+                        var updatedLine = UpdateFunctionNames(UpdateVariableNames(dataLine));
+                        AppendLine(storedProcedureInfo.ProcedureBody, updatedLine + " Loop");
+
+                        controlBlockStack.Push(ControlBlockTypes.While);
+
+                        // If the next line starts with BEGIN, skip it
+                        // (since PostgreSQL syntax does not use Begin at the start of While Loops, only at the start of multi-line If blocks)
+                        ReadAndCacheLines(reader, cachedLines, 1);
+                        if (cachedLines.Count > 0 && cachedLines.First().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
+                        {
+                            cachedLines.Dequeue();
+                        }
+
+                        continue;
+                    }
+
+                    if (trimmedLine.Equals("Goto done", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var leadingWhitespace = GetLeadingWhitespace(dataLine);
+                        AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + "Return;");
+
+                        continue;
+                    }
+
+                    if (trimmedLine.StartsWith("exec @myError = ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var leadingWhitespace = GetLeadingWhitespace(dataLine);
+                        var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec @myError = ".Length));
+                        if (updatedLine.Contains("="))
+                            updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
+
+                        AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
+                        continue;
+                    }
+
+                    if (trimmedLine.StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var leadingWhitespace = GetLeadingWhitespace(dataLine);
+                        var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec ".Length));
+                        if (updatedLine.Contains("="))
+                            updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
+
+                        AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
+                        continue;
+                    }
+
+                    var updateOrDeleteQueryMatch = mUpdateOrDeleteQueryMatcher.Match(trimmedLine);
+                    if (updateOrDeleteQueryMatch.Success)
+                    {
+                        mostRecentUpdateOrDeleteType = updateOrDeleteQueryMatch.Groups["QueryType"].Value;
+                        mostRecentUpdateOrDeleteTable = updateOrDeleteQueryMatch.Groups["TargetTable"].Value;
+                    }
+                    else
+                    {
+                        if (mostRecentUpdateOrDeleteTable.Length > 0 &&
+                            trimmedLine.StartsWith("FROM " + mostRecentUpdateOrDeleteTable, StringComparison.OrdinalIgnoreCase))
+                        {
+                            UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
+
+                            var leadingWhitespace = GetLeadingWhitespace(dataLine);
+                            var updateQueryWarnings = new List<string>
+                            {
+                                string.Empty,
+                                "/********************************************************************************",
+                                "** This " + mostRecentUpdateOrDeleteType + " query includes the target table name in the FROM clause",
+                                "** The WHERE clause needs to have a self join to the target table, for example:",
+                                string.Format(
+                                    "** WHERE {0}.Primary_Key_ID = {0}Aliased.Primary_Key_ID ", mostRecentUpdateOrDeleteTable)
+                            };
+
+                            if (mostRecentUpdateOrDeleteType.StartsWith("delete", StringComparison.OrdinalIgnoreCase))
+                            {
+                                updateQueryWarnings.Add("**");
+                                updateQueryWarnings.Add("** Delete queries must also include the USING keyword");
+                                updateQueryWarnings.Add("** Alternatively, the more standard approach is to rearrange the query to be similar to");
+                                updateQueryWarnings.Add("** DELETE FROM target WHERE id in (SELECT id from ...)");
+                            }
+
+                            updateQueryWarnings.Add("********************************************************************************/");
+                            updateQueryWarnings.Add(string.Empty);
+                            updateQueryWarnings.Add("                       ToDo: Fix this query");
+                            updateQueryWarnings.Add(string.Empty);
+
+                            foreach (var item in updateQueryWarnings)
+                            {
+                                if (item.Length > 0)
+                                    UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + item);
+                                else
+                                    UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, item);
+                            }
+
+                            continue;
+                        }
+                    }
+
+                    // Normal line of code (or whitespace); append it to the body
+                    UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
                 }
 
                 return true;
