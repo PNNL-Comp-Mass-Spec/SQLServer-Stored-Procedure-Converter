@@ -8,7 +8,7 @@ using TableColumnNameMapContainer;
 
 namespace SQLServer_Stored_Procedure_Converter
 {
-    class StoredProcedureConverter : EventNotifier
+    internal class StoredProcedureConverter : EventNotifier
     {
         #region "Constants and Enums"
 

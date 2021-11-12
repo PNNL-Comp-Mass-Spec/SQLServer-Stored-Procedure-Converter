@@ -6,7 +6,7 @@ using PRISM;
 
 namespace SQLServer_Stored_Procedure_Converter
 {
-    class Program
+    internal class Program
     {
 
         private static DateTime mLastProgressTime;
@@ -14,7 +14,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             mLastProgressTime = DateTime.UtcNow;
 

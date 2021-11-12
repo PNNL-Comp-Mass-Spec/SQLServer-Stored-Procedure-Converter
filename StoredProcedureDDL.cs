@@ -4,7 +4,7 @@ using System.IO;
 
 namespace SQLServer_Stored_Procedure_Converter
 {
-    class StoredProcedureDDL
+    internal class StoredProcedureDDL
     {
         /// <summary>
         /// True if a function, false if a stored procedure
