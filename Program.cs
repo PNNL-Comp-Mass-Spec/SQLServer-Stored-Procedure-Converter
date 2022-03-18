@@ -25,7 +25,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             var parser = new CommandLineParser<StoredProcedureConverterOptions>(asmName.Name, version)
             {
-                ProgramInfo = "This program converts SQL Server stored procedures to PostgreSQL compatible stored procedures. " +
+                ProgramInfo = "This program converts SQL Server stored procedures into PostgreSQL compatible stored procedures. " +
                               "The converted procedures will typically need additional manual adjustments to become usable.",
 
                 ContactInfo = "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
