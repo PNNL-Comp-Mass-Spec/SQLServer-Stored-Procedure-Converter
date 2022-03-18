@@ -68,7 +68,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Get the program version
         /// </summary>
-        /// <returns></returns>
         public static string GetAppVersion()
         {
             return Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
@@ -102,7 +101,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Validate the options
         /// </summary>
-        /// <returns></returns>
         public bool ValidateArgs(out string errorMessage)
         {
             if (string.IsNullOrWhiteSpace(SQLServerStoredProcedureFile))

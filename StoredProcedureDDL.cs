@@ -66,7 +66,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// Get the object name, without the schema
         /// </summary>
         /// <param name="objectName"></param>
-        /// <returns></returns>
         public static string GetNameWithoutSchema(string objectName)
         {
             if (string.IsNullOrWhiteSpace(objectName))
@@ -129,6 +128,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             // The procedure comment block must appear after $$, otherwise it will be discarded (and not associated with the procedure)
             var argumentCommentsAdded = false;
+
             foreach (var item in ProcedureCommentBlock)
             {
                 if (ProcedureArgumentComments.Count > 0)

@@ -1148,11 +1148,11 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Case insensitive search/replace
         /// </summary>
+        /// <remarks>The text to find is treated as RegEx, so be careful with symbols</remarks>
         /// <param name="dataLine"></param>
         /// <param name="textToFind"></param>
         /// <param name="replacementText"></param>
         /// <returns>Updated text</returns>
-        /// <remarks>The text to find is treated as RegEx, so be careful with symbols</remarks>
         private string ReplaceText(string dataLine, string textToFind, string replacementText)
         {
             return Regex.Replace(dataLine, textToFind, replacementText, RegexOptions.IgnoreCase);
@@ -1400,6 +1400,7 @@ namespace SQLServer_Stored_Procedure_Converter
             dataLine = mLenFunctionUpdater.Replace(dataLine, "char_length(");
 
             var charIndexMatch = mCharIndexUpdater.Match(dataLine);
+
             if (charIndexMatch.Success)
             {
                 var textToFind = charIndexMatch.Groups["TextToFind"].Value;
