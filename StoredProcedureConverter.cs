@@ -148,8 +148,6 @@ namespace SQLServer_Stored_Procedure_Converter
         /// </summary>
         private readonly StoredProcedureConverterOptions mOptions;
 
-        #endregion
-
         /// <summary>
         /// Constructor
         /// </summary>
