@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace SQLServer_Stored_Procedure_Converter
 {
@@ -189,12 +190,8 @@ namespace SQLServer_Stored_Procedure_Converter
             if (ProcedureArgumentComments.Count == 0)
                 return;
 
-            // Find the longest argument name
-            var maxArgNameLength = 0;
-            foreach (var argumentComment in ProcedureArgumentComments)
-            {
-                maxArgNameLength = Math.Max(maxArgNameLength, argumentComment.Key.Length);
-            }
+            // Find the longest argument name by examining the Keys in ProcedureArgumentComments
+            var maxArgNameLength = ProcedureArgumentComments.Max(argumentComment => argumentComment.Key.Length);
 
             writer.WriteLine("**  Arguments:");
 
