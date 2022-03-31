@@ -130,10 +130,10 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// This is used to find cases where the LIKE keyword is followed by text in quotes were a square bracket is used to denote a character class
+        /// This is used to find cases where the LIKE keyword is followed by text in quotes where a square bracket is used to denote a character class
         /// </summary>
         private readonly Regex mLikeCharacterClassMatcher = new(
-            @"LIKE(?<ComparisonSpec>\s+'[^']*[[][^']*')",
+            @"\bLIKE(?<ComparisonSpec>\s*'.*\[[^]]+\].*')",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -745,7 +745,7 @@ namespace SQLServer_Stored_Procedure_Converter
                     var likeCharacterClassMatch = mLikeCharacterClassMatcher.Match(dataLine);
                     if (likeCharacterClassMatch.Success)
                     {
-                        dataLine = mLikeCharacterClassMatcher.Replace(dataLine, "SIMILAR TO$1");
+                        dataLine = mLikeCharacterClassMatcher.Replace(dataLine, "SIMILAR TO${ComparisonSpec}");
                     }
 
                     var endMatch = endStatementMatcher.Match(dataLine);
