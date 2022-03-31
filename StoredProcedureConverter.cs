@@ -1386,6 +1386,11 @@ namespace SQLServer_Stored_Procedure_Converter
             dataLine = UpdatePrintStatement(dataLine);
             dataLine = UpdateFunctionNames(dataLine);
 
+            if (dataLine.Contains("+") && dataLine.Contains("'"))
+            {
+                dataLine = UpdateConcatenationOperator(dataLine);
+            }
+
             if (dataLine.IndexOf("varchar", StringComparison.OrdinalIgnoreCase) > 0)
             {
                 // Change any instance of varchar(10) or larger to text
