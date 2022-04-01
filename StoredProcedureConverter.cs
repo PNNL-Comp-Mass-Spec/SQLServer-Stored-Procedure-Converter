@@ -423,6 +423,11 @@ namespace SQLServer_Stored_Procedure_Converter
                     @"^(?<LeadingWhitespace>\s*)SELECT.+@(?<VariableName>[^\s]+)\s*=\s*(?<SourceColumn>.+)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+                // This is used to find SELECT statements that use TOP N to limit the number of rows retrieved
+                var selectTopMatcher = new Regex(
+                    @"^(?<LeadingWhitespace>\s*)SELECT\s+TOP\s+(?<RowCount>\d+)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
                 var createTempTableMatcher = new Regex(
                     @"^(?<LeadingWhitespace>\s+)CREATE TABLE #(?<TempTableName>[^\s]+)(?<ExtraInfo>.+)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -455,6 +460,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 var mostRecentUpdateOrDeleteType = string.Empty;
                 var mostRecentUpdateOrDeleteTable = string.Empty;
+                var limitRowCountDDL = string.Empty;
 
                 // This stack tracks nested if and while blocks; it is last in, first out (LIFO)
                 var controlBlockStack = new Stack<ControlBlockTypes>();
@@ -477,6 +483,12 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     if (trimmedLine.Contains("Custom SQL to find"))
                         Console.WriteLine("Check this code");
+
+                    if (!string.IsNullOrWhiteSpace(limitRowCountDDL) && (trimmedLine.Length == 0 || trimmedLine.StartsWith("--")))
+                    {
+                        AppendLine(storedProcedureInfo.ProcedureBody, limitRowCountDDL);
+                        limitRowCountDDL = string.Empty;
+                    }
 
                     // Skip lines that assign 0 to @myError
                     if (trimmedLine.Equals("Set @myError = 0", StringComparison.OrdinalIgnoreCase))
@@ -727,6 +739,22 @@ namespace SQLServer_Stored_Procedure_Converter
                     {
                         StoreSelectRowCount(storedProcedureInfo.ProcedureBody, selectRowcountMatch);
                         continue;
+                    }
+
+                    var selectTopMatch = selectTopMatcher.Match(dataLine);
+                    if (selectTopMatch.Success)
+                    {
+                        // Cache DDL to be written to the output file when the next blank line or line that starts with a comment is found
+                        // For example:
+                        //     LIMIT 1;
+                        limitRowCountDDL = string.Format("{0}LIMIT {1};",
+                            selectTopMatch.Groups["LeadingWhitespace"].Value,
+                            selectTopMatch.Groups["RowCount"].Value);
+
+                        AppendLine(storedProcedureInfo.ProcedureBody,
+                            string.Format("{0}-- Moved to bottom of query: TOP {1}",
+                                selectTopMatch.Groups["LeadingWhitespace"].Value,
+                                selectTopMatch.Groups["RowCount"].Value));
                     }
 
                     var selectAssignVariableMatch = selectAssignVariableMatcher.Match(dataLine);
