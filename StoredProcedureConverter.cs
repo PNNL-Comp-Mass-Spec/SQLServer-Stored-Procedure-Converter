@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using PRISM;
 using TableColumnNameMapContainer;
@@ -275,6 +276,11 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             var match = mLeadingWhitespaceMatcher.Match(dataLine);
             return !match.Success ? string.Empty : match.Value;
+        }
+
+        private static bool IsBlankOrComment(string dataLine)
+        {
+            return string.IsNullOrWhiteSpace(dataLine) || dataLine.Trim().StartsWith("--");
         }
 
         /// <summary>
@@ -900,6 +906,38 @@ namespace SQLServer_Stored_Procedure_Converter
                         if (cachedLines.Count > 0 && cachedLines.Peek().Trim().StartsWith("Begin", StringComparison.OrdinalIgnoreCase))
                         {
                             cachedLines.Dequeue();
+                        }
+
+                        // If the next non-blank / non-comment line starts with "SELECT TOP 1", add a comment about converting to a For loop
+                        ReadAndCacheLines(reader, cachedLines, 1, false);
+
+                        while (cachedLines.Count > 0 && IsBlankOrComment(cachedLines.Peek()))
+                        {
+                            AppendLine(storedProcedureInfo.ProcedureBody, cachedLines.Dequeue());
+
+                            ReadAndCacheLines(reader, cachedLines, 1, false);
+                        }
+
+                        if (cachedLines.Count > 0)
+                        {
+                            var selectTopOneMatch = selectTopMatcher.Match(cachedLines.Peek());
+                            if (selectTopOneMatch.Success && selectTopOneMatch.Groups["RowCount"].Value.Equals("1"))
+                            {
+                                var whiteSpace = selectTopOneMatch.Groups["LeadingWhitespace"].Value;
+
+                                var loopComment = new StringBuilder();
+                                loopComment.AppendFormat("{0}-- This While loop can probably be converted to a For loop; for example:", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--    For _itemName In", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--        SELECT item_name", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--        FROM TmpSourceTable", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--        ORDER BY entry_id", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--    Loop", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--        ...", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--    End Loop", whiteSpace).AppendLine().AppendLine();
+
+                                AppendLine(storedProcedureInfo.ProcedureBody, loopComment.ToString());
+                                storedProcedureInfo.ProcedureBody.Add(string.Empty);
+                            }
                         }
 
                         continue;
