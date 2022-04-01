@@ -285,7 +285,7 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             return
                 string.IsNullOrWhiteSpace(dataLine) ||
-                dataLine.StartsWith("--") ||
+                dataLine.Trim().StartsWith("--") ||
                 mBlockBoundaryMatcher.IsMatch(dataLine);
         }
 
