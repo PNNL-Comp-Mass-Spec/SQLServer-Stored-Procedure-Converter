@@ -10,7 +10,7 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class StoredProcedureConverter : EventNotifier
     {
-        // Ignore Spelling: auth, dbo, desc, lookbehind, mem, regex, tmp
+        // Ignore Spelling: auth, bs, dbo, desc, lookbehind, mem, regex, tmp
         // Ignore Spelling: smallint, tinyint, varchar
 
         private enum ControlBlockTypes
