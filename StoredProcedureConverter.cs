@@ -921,14 +921,18 @@ namespace SQLServer_Stored_Procedure_Converter
                             UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
 
                             var leadingWhitespace = GetLeadingWhitespace(dataLine);
+
                             var updateQueryWarnings = new List<string>
                             {
+                                // This UPDATE query includes the target table name in the FROM clause
                                 string.Empty,
                                 "/********************************************************************************",
                                 "** This " + mostRecentUpdateOrDeleteType + " query includes the target table name in the FROM clause",
                                 "** The WHERE clause needs to have a self join to the target table, for example:",
-                                string.Format(
-                                    "** WHERE {0}.Primary_Key_ID = {0}Aliased.Primary_Key_ID ", mostRecentUpdateOrDeleteTable)
+                                string.Format("**   UPDATE {0}", mostRecentUpdateOrDeleteTable),
+                                "**   SET ...",
+                                "**   FROM source",
+                                string.Format("**   WHERE source.id = {0}.id;", mostRecentUpdateOrDeleteTable)
                             };
 
                             if (mostRecentUpdateOrDeleteType.StartsWith("delete", StringComparison.OrdinalIgnoreCase))
@@ -936,7 +940,8 @@ namespace SQLServer_Stored_Procedure_Converter
                                 updateQueryWarnings.Add("**");
                                 updateQueryWarnings.Add("** Delete queries must also include the USING keyword");
                                 updateQueryWarnings.Add("** Alternatively, the more standard approach is to rearrange the query to be similar to");
-                                updateQueryWarnings.Add("** DELETE FROM target WHERE id in (SELECT id from ...)");
+                                updateQueryWarnings.Add(string.Format(
+                                    "**   DELETE FROM {0} WHERE id in (SELECT id from ...)", mostRecentUpdateOrDeleteTable));
                             }
 
                             updateQueryWarnings.Add("********************************************************************************/");
