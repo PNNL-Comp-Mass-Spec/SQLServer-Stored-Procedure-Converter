@@ -1088,15 +1088,49 @@ namespace SQLServer_Stored_Procedure_Converter
             return true;
         }
 
-        private void ReadAndCacheLines(StreamReader reader, Queue<string> cachedLines, int countToRead)
+        /// <summary>
+        /// Read and cache the specified number of lines
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="cachedLines"></param>
+        /// <param name="countToRead"></param>
+        /// <param name="countBlankLinesAndComments">
+        /// If false, when counting lines read, do not increment the count for blank lines or comment lines
+        /// </param>
+        private void ReadAndCacheLines(
+            StreamReader reader,
+            Queue<string> cachedLines,
+            int countToRead,
+            bool countBlankLinesAndComments = true)
         {
-            for (var i = 0; i < countToRead; i++)
+            var linesRead = 0;
+
+            while (true)
             {
+                if (countBlankLinesAndComments && linesRead >= countToRead)
+                {
+                    return;
+                }
+
+                if (!countBlankLinesAndComments && cachedLines.Count >= countToRead)
+                {
+                    return;
+                }
+
                 if (reader.EndOfStream)
                     return;
 
                 var dataLine = reader.ReadLine();
                 cachedLines.Enqueue(dataLine);
+
+                if (countBlankLinesAndComments)
+                {
+                    linesRead++;
+                }
+                else if (!string.IsNullOrWhiteSpace(dataLine) && !dataLine.Trim().StartsWith("--"))
+                {
+                    linesRead++;
+                }
             }
         }
 
