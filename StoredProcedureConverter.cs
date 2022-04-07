@@ -1040,56 +1040,6 @@ namespace SQLServer_Stored_Procedure_Converter
             }
         }
 
-        /// <summary>
-        /// Looks for table names in cachedLines, then uses that information to update column names
-        /// </summary>
-        /// <param name="cachedLines"></param>
-        /// <param name="tableNameMap">
-        /// Dictionary where keys are the original (source) table names
-        /// and values are WordReplacer classes that track the new table names and new column names in PostgreSQL
-        /// </param>
-        /// <param name="columnNameMap">
-        /// Dictionary where keys are new table names
-        /// and values are a Dictionary of mappings of original column names to new column names in PostgreSQL;
-        /// names should not have double quotes around them
-        /// </param>
-        /// <param name="updateSchemaOnTables"></param>
-        private void UpdateTableAndColumnNames(
-            List<string> cachedLines,
-            Dictionary<string, WordReplacer> tableNameMap,
-            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap,
-            bool updateSchemaOnTables)
-        {
-            var tablesInLine = new List<string>();
-            var updatedLineIndices = new SortedSet<int>();
-
-            var index = 0;
-            while (index < cachedLines.Count)
-            {
-                var matchFound = FindTablesByName(tableNameMap, cachedLines[index], tablesInLine);
-
-                if (!matchFound)
-                {
-                    index++;
-                    continue;
-                }
-
-                var currentBlock = FindCurrentBlock(cachedLines, index, updatedLineIndices, out var blockStartIndex);
-
-                var updatedBlock = ReplaceNamesInBlock(tableNameMap, columnNameMap, currentBlock, updateSchemaOnTables);
-
-                for (var i = 0; i < updatedBlock.Count; i++)
-                {
-                    var targetIndex = blockStartIndex + i;
-                    updatedLineIndices.Add(targetIndex);
-
-                    cachedLines[targetIndex] = updatedBlock[i];
-                }
-
-                index = blockStartIndex + updatedBlock.Count;
-            }
-        }
-
         private bool FindTablesByName(
             Dictionary<string, WordReplacer> tableNameMap,
             string dataLine,
@@ -1569,6 +1519,56 @@ namespace SQLServer_Stored_Procedure_Converter
                 return dataLine;
 
             return ReformatSetStatement(assignVariableMatch);
+        }
+
+        /// <summary>
+        /// Looks for table names in cachedLines, then uses that information to update column names
+        /// </summary>
+        /// <param name="cachedLines"></param>
+        /// <param name="tableNameMap">
+        /// Dictionary where keys are the original (source) table names
+        /// and values are WordReplacer classes that track the new table names and new column names in PostgreSQL
+        /// </param>
+        /// <param name="columnNameMap">
+        /// Dictionary where keys are new table names
+        /// and values are a Dictionary of mappings of original column names to new column names in PostgreSQL;
+        /// names should not have double quotes around them
+        /// </param>
+        /// <param name="updateSchemaOnTables"></param>
+        private void UpdateTableAndColumnNames(
+            List<string> cachedLines,
+            Dictionary<string, WordReplacer> tableNameMap,
+            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap,
+            bool updateSchemaOnTables)
+        {
+            var tablesInLine = new List<string>();
+            var updatedLineIndices = new SortedSet<int>();
+
+            var index = 0;
+            while (index < cachedLines.Count)
+            {
+                var matchFound = FindTablesByName(tableNameMap, cachedLines[index], tablesInLine);
+
+                if (!matchFound)
+                {
+                    index++;
+                    continue;
+                }
+
+                var currentBlock = FindCurrentBlock(cachedLines, index, updatedLineIndices, out var blockStartIndex);
+
+                var updatedBlock = ReplaceNamesInBlock(tableNameMap, columnNameMap, currentBlock, updateSchemaOnTables);
+
+                for (var i = 0; i < updatedBlock.Count; i++)
+                {
+                    var targetIndex = blockStartIndex + i;
+                    updatedLineIndices.Add(targetIndex);
+
+                    cachedLines[targetIndex] = updatedBlock[i];
+                }
+
+                index = blockStartIndex + updatedBlock.Count;
+            }
         }
 
         /// <summary>
