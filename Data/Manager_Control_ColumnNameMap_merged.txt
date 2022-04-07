@@ -75,12 +75,3 @@ T_ParamValue_OldManagers	Entered_By	mc	t_param_value_old_managers	entered_by
 T_SP_Authorization	ProcedureName	mc	t_sp_authorization	procedure_name
 T_SP_Authorization	LoginName	mc	t_sp_authorization	login_name
 T_SP_Authorization	HostName	mc	t_sp_authorization	host_name
-T_Usage_Log	Entry_ID	mc	t_usage_log	entry_id
-T_Usage_Log	Posted_By	mc	t_usage_log	posted_by
-T_Usage_Log	Posting_time	mc	t_usage_log	posting_time
-T_Usage_Log	Message	mc	t_usage_log	message
-T_Usage_Log	Calling_User	mc	t_usage_log	calling_user
-T_Usage_Log	Usage_Count	mc	t_usage_log	usage_count
-T_Usage_Stats	Posted_By	mc	t_usage_stats	posted_by
-T_Usage_Stats	Last_Posting_Time	mc	t_usage_stats	last_posting_time
-T_Usage_Stats	Usage_Count	mc	t_usage_stats	usage_count
