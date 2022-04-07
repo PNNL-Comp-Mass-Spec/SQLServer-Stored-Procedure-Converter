@@ -1,5 +1,5 @@
 
-CREATE OR REPLACE PROCEDURE mc.AckManagerUpdateRequired
+CREATE OR REPLACE PROCEDURE mc.ack_manager_update_required
 (
     _managerName text,
     INOUT _message text = ''
@@ -17,7 +17,7 @@ AS $$
 **  Auth:   mem
 **  Date:   01/16/2009 mem - Initial version
 **          09/09/2009 mem - Added support for 'ManagerUpdateRequired' already being False
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -91,9 +91,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.AckManagerUpdateRequired IS 'AckManagerUpdateRequired';
+COMMENT ON PROCEDURE mc.ack_manager_update_required IS 'AckManagerUpdateRequired';
 
-CREATE OR REPLACE PROCEDURE mc.AlterEnteredByUser
+CREATE OR REPLACE PROCEDURE mc.alter_entered_by_user
 (
     _targetTableName text,
     _targetIDColumnName text,
@@ -125,7 +125,7 @@ AS $$
 **  Auth:   mem
 **  Date:   03/25/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -297,9 +297,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.AlterEnteredByUser IS 'AlterEnteredByUser';
+COMMENT ON PROCEDURE mc.alter_entered_by_user IS 'AlterEnteredByUser';
 
-CREATE OR REPLACE PROCEDURE mc.AlterEnteredByUserMultiID
+CREATE OR REPLACE PROCEDURE mc.alter_entered_by_user_multi_id
 (
     _targetTableName text,
     _targetIDColumnName text,
@@ -334,7 +334,7 @@ AS $$
 **  Auth:   mem
 **  Date:   03/28/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -474,9 +474,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.AlterEnteredByUserMultiID IS 'AlterEnteredByUserMultiID';
+COMMENT ON PROCEDURE mc.alter_entered_by_user_multi_id IS 'AlterEnteredByUserMultiID';
 
-CREATE OR REPLACE PROCEDURE mc.AlterEventLogEntryUser
+CREATE OR REPLACE PROCEDURE mc.alter_event_log_entry_user
 (
     _targetType int,
     _targetID int,
@@ -507,7 +507,7 @@ AS $$
 **  Date:   02/29/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
 **          03/30/2009 mem - Ported to the Manager Control DB
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -660,9 +660,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.AlterEventLogEntryUser IS 'AlterEventLogEntryUser';
+COMMENT ON PROCEDURE mc.alter_event_log_entry_user IS 'AlterEventLogEntryUser';
 
-CREATE OR REPLACE PROCEDURE mc.AlterEventLogEntryUserMultiID
+CREATE OR REPLACE PROCEDURE mc.alter_event_log_entry_user_multi_id
 (
     _targetType int,
     _targetState int,
@@ -696,7 +696,7 @@ AS $$
 **  Date:   02/29/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
 **          03/30/2009 mem - Ported to the Manager Control DB
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -832,9 +832,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.AlterEventLogEntryUserMultiID IS 'AlterEventLogEntryUserMultiID';
+COMMENT ON PROCEDURE mc.alter_event_log_entry_user_multi_id IS 'AlterEventLogEntryUserMultiID';
 
-CREATE OR REPLACE PROCEDURE mc.ArchiveOldManagersAndParams
+CREATE OR REPLACE PROCEDURE mc.archive_old_managers_and_params
 (
     _mgrList text,
     _infoOnly int = 1,
@@ -856,7 +856,7 @@ AS $$
 **  Date:   05/14/2015 mem - Initial version
 **          02/25/2016 mem - Add Set XACT_ABORT On
 **          04/22/2016 mem - Now updating M_Comment in T_OldManagers
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1087,9 +1087,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.ArchiveOldManagersAndParams IS 'ArchiveOldManagersAndParams';
+COMMENT ON PROCEDURE mc.archive_old_managers_and_params IS 'ArchiveOldManagersAndParams';
 
-CREATE OR REPLACE PROCEDURE mc.DisableAnalysisManagers
+CREATE OR REPLACE PROCEDURE mc.disable_analysis_managers
 (
     _previewUpdates int = 0,
     INOUT _message text=''
@@ -1104,7 +1104,7 @@ AS $$
 **  Date:   05/09/2008
 **          10/09/2009 mem - Changed _managerTypeIDList to 11
 **          06/09/2011 mem - Now calling EnableDisableAllManagers
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
@@ -1116,9 +1116,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.DisableAnalysisManagers IS 'DisableAnalysisManagers';
+COMMENT ON PROCEDURE mc.disable_analysis_managers IS 'DisableAnalysisManagers';
 
-CREATE OR REPLACE PROCEDURE mc.DisableArchiveDependentManagers
+CREATE OR REPLACE PROCEDURE mc.disable_archive_dependent_managers
 (
     _previewUpdates int = 0,
     INOUT _message text=''
@@ -1135,7 +1135,7 @@ AS $$
 **          07/24/2008 mem - Changed _managerTypeIDList from '2,3,8' to '8'
 **                         - Note that we do not include 15=CaptureTaskManager because capture tasks can still occur when the archive is unavailable
 **                         - However, you should run Stored Procedure EnableDisableArchiveStepTools in the DMS_Capture database to disable the archive-dependent step tools
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
@@ -1147,9 +1147,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.DisableArchiveDependentManagers IS 'DisableArchiveDependentManagers';
+COMMENT ON PROCEDURE mc.disable_archive_dependent_managers IS 'DisableArchiveDependentManagers';
 
-CREATE OR REPLACE PROCEDURE mc.DisableSequestClusters
+CREATE OR REPLACE PROCEDURE mc.disable_sequest_clusters
 (
     _previewUpdates int = 0,
     INOUT _message text=''
@@ -1163,7 +1163,7 @@ AS $$
 **  Auth:   mem
 **  Date:   07/24/2008
 **          10/09/2009 mem - Changed _managerTypeIDList to 11
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
@@ -1175,9 +1175,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.DisableSequestClusters IS 'DisableSequestClusters';
+COMMENT ON PROCEDURE mc.disable_sequest_clusters IS 'DisableSequestClusters';
 
-CREATE OR REPLACE PROCEDURE mc.DuplicateManagerParameter
+CREATE OR REPLACE PROCEDURE mc.duplicate_manager_parameter
 (
     _sourceParamTypeID int,
     _newParamTypeID int,
@@ -1206,7 +1206,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   08/26/2013 mem - Initial release
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1303,9 +1303,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.DuplicateManagerParameter IS 'DuplicateManagerParameter';
+COMMENT ON PROCEDURE mc.duplicate_manager_parameter IS 'DuplicateManagerParameter';
 
-CREATE OR REPLACE PROCEDURE mc.DuplicateManagerParameters
+CREATE OR REPLACE PROCEDURE mc.duplicate_manager_parameters
 (
     _sourceMgrID int,
     _targetMgrID int,
@@ -1327,7 +1327,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   10/10/2014 mem - Initial release
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1409,9 +1409,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.DuplicateManagerParameters IS 'DuplicateManagerParameters';
+COMMENT ON PROCEDURE mc.duplicate_manager_parameters IS 'DuplicateManagerParameters';
 
-CREATE OR REPLACE PROCEDURE mc.EnableArchiveDependentManagers
+CREATE OR REPLACE PROCEDURE mc.enable_archive_dependent_managers
 (
     _previewUpdates int = 0,
     INOUT _message text=''
@@ -1424,7 +1424,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   06/09/2011 mem - Initial Version
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
@@ -1436,9 +1436,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.EnableArchiveDependentManagers IS 'EnableArchiveDependentManagers';
+COMMENT ON PROCEDURE mc.enable_archive_dependent_managers IS 'EnableArchiveDependentManagers';
 
-CREATE OR REPLACE PROCEDURE mc.EnableDisableAllManagers
+CREATE OR REPLACE PROCEDURE mc.enable_disable_all_managers
 (
     _managerTypeIDList text = '',
     _managerNameList text = '',
@@ -1461,7 +1461,7 @@ AS $$
 **  Date:   05/09/2008
 **          06/09/2011 - Created by extending code in DisableAllManagers
 **                     - Now filtering on MT_Active > 0 in T_MgrTypes
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1550,9 +1550,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.EnableDisableAllManagers IS 'EnableDisableAllManagers';
+COMMENT ON PROCEDURE mc.enable_disable_all_managers IS 'EnableDisableAllManagers';
 
-CREATE OR REPLACE PROCEDURE mc.EnableDisableManagers
+CREATE OR REPLACE PROCEDURE mc.enable_disable_managers
 (
     _enable int,
     _managerTypeID int=11,
@@ -1578,7 +1578,7 @@ AS $$
 **                         - Now allowing _managerNameList to be All when _enable = 1
 **          10/12/2017 mem - Allow _managerTypeID to be 0 if _managerNameList is provided
 **          03/28/2018 mem - Use different messages when updating just one manager
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1851,9 +1851,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.EnableDisableManagers IS 'EnableDisableManagers';
+COMMENT ON PROCEDURE mc.enable_disable_managers IS 'EnableDisableManagers';
 
-CREATE OR REPLACE PROCEDURE mc.EnableDisableRunJobsRemotely
+CREATE OR REPLACE PROCEDURE mc.enable_disable_run_jobs_remotely
 (
     _enable int,
     _managerNameList text = '',
@@ -1875,7 +1875,7 @@ AS $$
 **  Auth:   mem
 **  Date:   03/28/2018 mem - Initial version
 **          03/29/2018 mem - Add parameter _addMgrParamsIfMissing
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2150,9 +2150,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.EnableDisableRunJobsRemotely IS 'EnableDisableRunJobsRemotely';
+COMMENT ON PROCEDURE mc.enable_disable_run_jobs_remotely IS 'EnableDisableRunJobsRemotely';
 
-CREATE OR REPLACE PROCEDURE mc.GetDefaultRemoteInfoForManager
+CREATE OR REPLACE PROCEDURE mc.get_default_remote_info_for_manager
 (
     _managerName text,
     _remoteInfoXML text Output
@@ -2177,7 +2177,7 @@ AS $$
 **  Date:   05/18/2017 mem - Initial version
 **          03/14/2018 mem - Use GetManagerParametersWork to lookup manager parameters, allowing for getting remote info parameters from parent groups
 **          03/29/2018 mem - Return an empty string if the manager does not have parameters RunJobsRemotely and RemoteHostName defined, or if RunJobsRemotely is false
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2288,9 +2288,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.GetDefaultRemoteInfoForManager IS 'GetDefaultRemoteInfoForManager';
+COMMENT ON PROCEDURE mc.get_default_remote_info_for_manager IS 'GetDefaultRemoteInfoForManager';
 
-CREATE OR REPLACE PROCEDURE mc.GetManagerParameters
+CREATE OR REPLACE PROCEDURE mc.get_manager_parameters
 (
     _managerNameList text = '',
     _sortMode int = 0,
@@ -2312,7 +2312,7 @@ AS $$
 **          08/10/2015 mem - Add _sortMode=3
 **          09/02/2016 mem - Increase the default for parameter _maxRecursion from 5 to 50
 **          03/14/2018 mem - Refactor actual parameter lookup into stored procedure GetManagerParametersWork
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2388,9 +2388,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.GetManagerParameters IS 'GetManagerParameters';
+COMMENT ON PROCEDURE mc.get_manager_parameters IS 'GetManagerParameters';
 
-CREATE OR REPLACE PROCEDURE mc.GetManagerParametersWork
+CREATE OR REPLACE PROCEDURE mc.get_manager_parameters_work
 (
     _managerNameList text = '',
     _sortMode int = 0,
@@ -2411,7 +2411,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   03/14/2018 mem - Initial version (code refactored from GetManagerParameters)
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2547,9 +2547,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.GetManagerParametersWork IS 'GetManagerParametersWork';
+COMMENT ON PROCEDURE mc.get_manager_parameters_work IS 'GetManagerParametersWork';
 
-CREATE OR REPLACE PROCEDURE mc.ParseManagerNameList
+CREATE OR REPLACE PROCEDURE mc.parse_manager_name_list
 (
     _managerNameList text = '',
     _removeUnknownManagers int = 1,
@@ -2572,7 +2572,7 @@ AS $$
 **  Auth:   mem
 **  Date:   05/09/2008
 **          05/14/2015 mem - Update Insert query to explicitly list field Manager_Name
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2711,9 +2711,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.ParseManagerNameList IS 'ParseManagerNameList';
+COMMENT ON PROCEDURE mc.parse_manager_name_list IS 'ParseManagerNameList';
 
-CREATE OR REPLACE PROCEDURE mc.PostLogEntry()
+CREATE OR REPLACE PROCEDURE mc.post_log_entry()
 LANGUAGE plpgsql
 AS $$
 /****************************************************
@@ -2725,7 +2725,7 @@ AS $$
 **  Date:   10/31/2001
 **          02/17/2005 mem - Added parameter _duplicateEntryHoldoffHours
 **          05/31/2007 mem - Expanded the size of _type, _message, and _postedBy
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2760,9 +2760,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.PostLogEntry IS 'PostLogEntry';
+COMMENT ON PROCEDURE mc.post_log_entry IS 'PostLogEntry';
 
-CREATE OR REPLACE PROCEDURE mc.PostUsageLogEntry
+CREATE OR REPLACE PROCEDURE mc.post_usage_log_entry
 (
     _postedBy text,
     _message text = '',
@@ -2783,7 +2783,7 @@ AS $$
 **          03/16/2006 mem - Now updating T_Usage_Stats
 **          03/17/2006 mem - Now populating Usage_Count in T_Usage_Log and changed _minimumUpdateInterval from 6 hours to 1 hour
 **          05/03/2009 mem - Removed parameter _dBName
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2844,9 +2844,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.PostUsageLogEntry IS 'PostUsageLogEntry';
+COMMENT ON PROCEDURE mc.post_usage_log_entry IS 'PostUsageLogEntry';
 
-CREATE OR REPLACE PROCEDURE mc.ReportManagerErrorCleanup
+CREATE OR REPLACE PROCEDURE mc.report_manager_error_cleanup
 (
     _managerName text,
     _state int = 0,
@@ -2866,7 +2866,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   09/10/2009 mem - Initial version
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3020,9 +3020,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.ReportManagerErrorCleanup IS 'ReportManagerErrorCleanup';
+COMMENT ON PROCEDURE mc.report_manager_error_cleanup IS 'ReportManagerErrorCleanup';
 
-CREATE OR REPLACE PROCEDURE mc.SetManagerErrorCleanupMode
+CREATE OR REPLACE PROCEDURE mc.set_manager_error_cleanup_mode
 (
     _managerList text = '',
     _cleanupMode int = 1,
@@ -3045,7 +3045,7 @@ AS $$
 **  Date:   09/10/2009 mem - Initial version
 **          09/29/2014 mem - Expanded _managerList to varchar(max) and added parameters _showTable and _infoOnly
 **                         - Fixed where clause bug in final update query
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3239,9 +3239,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.SetManagerErrorCleanupMode IS 'SetManagerErrorCleanupMode';
+COMMENT ON PROCEDURE mc.set_manager_error_cleanup_mode IS 'SetManagerErrorCleanupMode';
 
-CREATE OR REPLACE PROCEDURE mc.SetManagerUpdateRequired
+CREATE OR REPLACE PROCEDURE mc.set_manager_update_required
 (
     _managerList text = '',
     _showTable int = 0,
@@ -3258,7 +3258,7 @@ AS $$
 **  Auth:   mem
 **  Date:   01/24/2009 mem - Initial version
 **          04/17/2014 mem - Expanded _managerList to varchar(max) and added parameter _showTable
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3421,9 +3421,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.SetManagerUpdateRequired IS 'SetManagerUpdateRequired';
+COMMENT ON PROCEDURE mc.set_manager_update_required IS 'SetManagerUpdateRequired';
 
-CREATE OR REPLACE PROCEDURE mc.UnarchiveOldManagersAndParams
+CREATE OR REPLACE PROCEDURE mc.unarchive_old_managers_and_params
 (
     _mgrList text,
     _infoOnly int = 1,
@@ -3445,7 +3445,7 @@ AS $$
 **  Auth:   mem
 **  Date:   02/25/2016 mem - Initial version
 **          04/22/2016 mem - Now updating M_Comment in T_Mgrs
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3697,9 +3697,9 @@ Done:
 END
 $$;
 
-COMMENT ON PROCEDURE mc.UnarchiveOldManagersAndParams IS 'UnarchiveOldManagersAndParams';
+COMMENT ON PROCEDURE mc.unarchive_old_managers_and_params IS 'UnarchiveOldManagersAndParams';
 
-CREATE OR REPLACE PROCEDURE mc.UpdateSingleMgrControlParam
+CREATE OR REPLACE PROCEDURE mc.update_single_mgr_control_param
 (
     _paramName text,
     _newValue text,
@@ -3730,7 +3730,7 @@ AS $$
 **          04/29/2015 mem - Now parsing _managerIDList using udfParseDelimitedIntegerList
 **                         - Added parameter _infoOnly
 **                         - Renamed the first parameter from _paramValue to _paramName
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3888,9 +3888,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.UpdateSingleMgrControlParam IS 'UpdateSingleMgrControlParam';
+COMMENT ON PROCEDURE mc.update_single_mgr_control_param IS 'UpdateSingleMgrControlParam';
 
-CREATE OR REPLACE PROCEDURE mc.UpdateSingleMgrParamWork
+CREATE OR REPLACE PROCEDURE mc.update_single_mgr_param_work
 (
     _paramName text,
     _newValue text,
@@ -3913,7 +3913,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   04/16/2009
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -4020,9 +4020,9 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.UpdateSingleMgrParamWork IS 'UpdateSingleMgrParamWork';
+COMMENT ON PROCEDURE mc.update_single_mgr_param_work IS 'UpdateSingleMgrParamWork';
 
-CREATE OR REPLACE PROCEDURE mc.UpdateSingleMgrTypeControlParam
+CREATE OR REPLACE PROCEDURE mc.update_single_mgr_type_control_param
 (
     _paramValue text,
     _newValue text,
@@ -4046,7 +4046,7 @@ AS $$
 **          07/31/2007 grk - changed for 'controlfromwebsite' no longer a parameter
 **          03/30/2009 mem - Added optional parameter _callingUser; if provided, then will call AlterEnteredByUserMultiID and possibly AlterEventLogEntryUserMultiID
 **          04/16/2009 mem - Now calling UpdateSingleMgrParamWork to perform the updates
-**          04/01/2022 mem - Ported to PostgreSQL
+**          04/07/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -4103,4 +4103,4 @@ BEGIN
 END
 $$;
 
-COMMENT ON PROCEDURE mc.UpdateSingleMgrTypeControlParam IS 'UpdateSingleMgrTypeControlParam';
+COMMENT ON PROCEDURE mc.update_single_mgr_type_control_param IS 'UpdateSingleMgrTypeControlParam';
