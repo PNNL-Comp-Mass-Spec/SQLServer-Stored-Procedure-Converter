@@ -11,7 +11,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "April 1, 2022";
+        public const string PROGRAM_DATE = "April 4, 2022";
 
         [Option("StoredProcFile", "Input", "I", ArgPosition = 1, Required = true,
             HelpShowsDefault = false, IsInputFilePath = true,
@@ -30,6 +30,10 @@ namespace SQLServer_Stored_Procedure_Converter
             HelpText = "Column name map file (typically created by sqlserver2pgsql.pl); tab-delimited file with five columns:\n" +
                        "SourceTable  SourceName  Schema  NewTable  NewName")]
         public string ColumnNameMapFile { get; set; }
+
+        [Option("SnakeCase", "Snake", HelpShowsDefault = true,
+            HelpText = "When true, convert procedure and function names to snake_case")]
+        public bool ConvertNamesToSnakeCase { get; set; } = true;
 
         /// <summary>
         /// List of stored procedures to skip when converting the source file
@@ -94,6 +98,8 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 Console.WriteLine(" {0,-35} {1}", "Column name map file:", PathUtils.CompactPathString(ColumnNameMapFile, 80));
             }
+
+            Console.WriteLine(" {0,-35} {1}", "Convert names to snake case:", ConvertNamesToSnakeCase);
 
             Console.WriteLine();
         }

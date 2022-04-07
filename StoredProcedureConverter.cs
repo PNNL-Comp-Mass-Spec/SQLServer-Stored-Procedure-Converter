@@ -21,11 +21,25 @@ namespace SQLServer_Stored_Procedure_Converter
         }
 
         /// <summary>
+        /// Match any lowercase letter
+        /// </summary>
+        private static readonly Regex mAnyLowerMatcher = new(
+            "[a-z]",
+            RegexOptions.Compiled | RegexOptions.Singleline);
+
+        /// <summary>
         /// This is used when backtracking and forward tracking to find lines of code that should be processed as a block
         /// </summary>
         private static readonly Regex mBlockBoundaryMatcher = new(
             @"^\s*(Begin|End|If|Else)\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
+        /// Match a lowercase letter followed by an uppercase letter
+        /// </summary>
+        private static readonly Regex mCamelCaseMatcher = new(
+            "(?<LowerLetter>[a-z])(?<UpperLetter>[A-Z])",
+            RegexOptions.Compiled);
 
         /// <summary>
         /// This is used to match Desc, Auth, or Date keywords in a comment block
@@ -198,6 +212,27 @@ namespace SQLServer_Stored_Procedure_Converter
             var leadingWhitespace = GetLeadingWhitespace(dataLine);
 
             AppendLine(procedureBody, leadingWhitespace + dataLine.Substring(commentIndex));
+        }
+
+        /// <summary>
+        /// Convert the object name to snake_case
+        /// </summary>
+        /// <param name="objectName"></param>
+        public static string ConvertNameToSnakeCase(string objectName)
+        {
+            if (!mAnyLowerMatcher.IsMatch(objectName))
+            {
+                // objectName contains no lowercase letters; simply change to lowercase and return
+                return objectName.ToLower();
+            }
+
+            var match = mCamelCaseMatcher.Match(objectName);
+
+            var updatedName = match.Success
+                ? mCamelCaseMatcher.Replace(objectName, "${LowerLetter}_${UpperLetter}")
+                : objectName;
+
+            return updatedName.ToLower();
         }
 
         /// <summary>
@@ -471,7 +506,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 // This stack tracks nested if and while blocks; it is last in, first out (LIFO)
                 var controlBlockStack = new Stack<ControlBlockTypes>();
 
-                var storedProcedureInfo = new StoredProcedureDDL(string.Empty);
+                var storedProcedureInfo = new StoredProcedureDDL(mOptions, string.Empty);
 
                 using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
                 using var writer = new StreamWriter(new FileStream(outputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));

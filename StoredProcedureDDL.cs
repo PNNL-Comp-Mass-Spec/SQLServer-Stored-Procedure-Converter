@@ -7,6 +7,8 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class StoredProcedureDDL
     {
+        // Ignore Spelling: auth, plpgsql
+
         /// <summary>
         /// True if a function, false if a stored procedure
         /// </summary>
@@ -16,6 +18,11 @@ namespace SQLServer_Stored_Procedure_Converter
         /// Local variables defined in the procedure
         /// </summary>
         public List<string> LocalVariablesToDeclare { get; }
+
+        /// <summary>
+        /// Processing options
+        /// </summary>
+        public StoredProcedureConverterOptions Options { get; }
 
         /// <summary>
         /// List of arguments for the procedure
@@ -52,8 +59,10 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Constructor
         /// </summary>
-        public StoredProcedureDDL(string procedureName)
+        public StoredProcedureDDL(StoredProcedureConverterOptions options, string procedureName)
         {
+            Options = options;
+
             LocalVariablesToDeclare = new List<string>();
             ProcedureArguments = new List<string>();
             ProcedureArgumentComments = new List<KeyValuePair<string, string>>();
@@ -97,7 +106,7 @@ namespace SQLServer_Stored_Procedure_Converter
         }
 
         /// <summary>
-        /// Write the DDL for creating this stored procedure in PostgreSQl
+        /// Write the DDL for creating this stored procedure in PostgreSQL
         /// </summary>
         /// <param name="writer"></param>
         public void ToWriterForPostgres(StreamWriter writer)
@@ -107,7 +116,11 @@ namespace SQLServer_Stored_Procedure_Converter
 
             writer.WriteLine();
 
-            var createProcedure = "CREATE OR REPLACE PROCEDURE " + ProcedureName;
+            var newProcedureName = Options.ConvertNamesToSnakeCase
+                ? StoredProcedureConverter.ConvertNameToSnakeCase(ProcedureName)
+                : ProcedureName;
+
+            var createProcedure = "CREATE OR REPLACE PROCEDURE " + newProcedureName;
 
             if (ProcedureArguments.Count == 0)
             {
@@ -182,7 +195,7 @@ namespace SQLServer_Stored_Procedure_Converter
             writer.WriteLine();
 
             var procedureNameWithoutSchema = GetNameWithoutSchema(ProcedureName);
-            writer.WriteLine("COMMENT ON PROCEDURE {0} IS '{1}';", ProcedureName, procedureNameWithoutSchema);
+            writer.WriteLine("COMMENT ON PROCEDURE {0} IS '{1}';", newProcedureName, procedureNameWithoutSchema);
         }
 
         private void WriteArgumentComments(TextWriter writer)
