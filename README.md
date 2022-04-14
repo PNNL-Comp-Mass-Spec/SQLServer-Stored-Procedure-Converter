@@ -15,6 +15,7 @@ SQLServer_Stored_Procedure_Converter.exe
   [/Map:NameMapFile.txt]
   [/SkipList:StoredProcedureSkipiList]
   [/SnakeCase:False]
+  [/V]
   [/ParamFile:ParamFileName.conf] [/CreateParamFile]
 ```
 
@@ -51,6 +52,8 @@ The `/Map` file is is a tab-delimited text file with five columns
 Use `/SkipList` or `/StoredProceduresToSkip` to define a comma separated list of stored procedures to skip while parsing the input file
 
 Use `/SnakeCase:False` to disable converting stored procedure names from `CamelCase` to `snake_case`
+
+Use `/V` to enable verbose mode, displaying each updated code block
 
 The processing options can be specified in a parameter file using `/ParamFile:Options.conf` or `/Conf:Options.conf`
 * Define options using the format `ArgumentName=Value`

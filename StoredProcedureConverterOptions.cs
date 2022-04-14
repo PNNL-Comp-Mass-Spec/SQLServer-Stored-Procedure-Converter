@@ -11,7 +11,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "April 4, 2022";
+        public const string PROGRAM_DATE = "April 13, 2022";
 
         [Option("StoredProcFile", "Input", "I", ArgPosition = 1, Required = true,
             HelpShowsDefault = false, IsInputFilePath = true,
@@ -58,6 +58,10 @@ namespace SQLServer_Stored_Procedure_Converter
                 }
             }
         }
+
+        [Option("Verbose", "V", HelpShowsDefault = true,
+            HelpText = "When true, display each updated code block")]
+        public bool VerboseOutput { get; set; }
 
         /// <summary>
         /// Constructor

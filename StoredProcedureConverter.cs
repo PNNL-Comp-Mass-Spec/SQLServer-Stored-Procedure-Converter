@@ -1227,7 +1227,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 updatedLines[i] = workingCopy;
             }
 
-            if (blockUpdated)
+            if (blockUpdated && mOptions.VerboseOutput)
             {
                 OnDebugEvent("Updated block:\n    " + string.Join("\n    ", updatedLines));
             }
