@@ -226,6 +226,15 @@ namespace SQLServer_Stored_Procedure_Converter
                 return objectName.ToLower();
             }
 
+            // Need to convert MyEMSL to lower case to avoid misplaced underscores in the new name
+            var index = objectName.IndexOf("MyEMSL", StringComparison.Ordinal);
+
+            // ReSharper disable once StringLiteralTypo
+            if (index >= 0)
+            {
+                objectName = objectName.Replace("MyEMSL", "Myemsl");
+            }
+
             var match = mCamelCaseMatcher.Match(objectName);
 
             var updatedName = match.Success
