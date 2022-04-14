@@ -11,7 +11,9 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class StoredProcedureConverter : EventNotifier
     {
-        // Ignore Spelling: auth, bs, dbo, desc, lookbehind, mem, regex, tmp
+        // ReSharper disable once CommentTypo
+
+        // Ignore Spelling: auth, bs, dbo, desc, lookbehind, mem, myemsl, regex, tmp
         // Ignore Spelling: smallint, tinyint, varchar
 
         private enum ControlBlockTypes
