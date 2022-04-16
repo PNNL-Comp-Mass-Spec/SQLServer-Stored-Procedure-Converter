@@ -442,6 +442,14 @@ namespace SQLServer_Stored_Procedure_Converter
                     @"\[[^\]]+\]\.\[(?<ProcedureName>[^\]]+)\]",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+                // This looks for lines that start with whitespace then (
+                var argumentListStartMatcher = new Regex(@"^\s*\(", RegexOptions.Compiled);
+
+                // This looks for lines that start with whitespace then )
+                var argumentListEndMatcher = new Regex(@"^\s*\)", RegexOptions.Compiled);
+
+                // This looks for lines that have ()
+                var emptyArgumentListMatcher = new Regex(@"^\s*\(\s*\)", RegexOptions.Compiled);
                 // This looks for variable declaration statements, where a value is assigned to the variable
                 var declareAndAssignMatcher = new Regex(
                     @"^(?<LeadingWhitespace>\s*)Declare\s+@(?<VariableName>[^\s]+)(?<DataType>[^=]+)\s*=\s*(?<AssignedValue>.+)",
@@ -696,13 +704,17 @@ namespace SQLServer_Stored_Procedure_Converter
                         continue;
                     }
 
-                    if (!foundArgumentListStart && dataLine.StartsWith("("))
+                    if (!foundArgumentListStart && argumentListStartMatcher.IsMatch(dataLine))
                     {
                         foundArgumentListStart = true;
+
+                        if (emptyArgumentListMatcher.IsMatch(dataLine))
+                            foundArgumentListEnd = true;
+
                         continue;
                     }
 
-                    if (foundArgumentListStart && !foundArgumentListEnd && dataLine.StartsWith(")"))
+                    if (foundArgumentListStart && !foundArgumentListEnd && argumentListEndMatcher.IsMatch(dataLine))
                     {
                         foundArgumentListEnd = true;
                         continue;
