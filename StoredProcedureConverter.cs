@@ -1386,7 +1386,8 @@ namespace SQLServer_Stored_Procedure_Converter
             }
             else
             {
-                // This shouldn't normally happen
+                // This shouldn't normally happen, but could indicate a comment line in the argument list
+                // Can also happen if a stored procedure does not have any arguments, or did not surround the argument list with parentheses
                 argumentName = string.Empty;
                 updatedArgumentLine = dataLine.Trim();
             }
