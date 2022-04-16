@@ -450,6 +450,17 @@ namespace SQLServer_Stored_Procedure_Converter
 
                 // This looks for lines that have ()
                 var emptyArgumentListMatcher = new Regex(@"^\s*\(\s*\)", RegexOptions.Compiled);
+
+                // This looks for the Return type of functions
+                var returnTypeMatcher = new Regex(
+                    @"^\s*RETURNS\s+(?<ReturnType>.+)",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                // This looks for functions where the return type is specified on the next line
+                var returnTypeMatcherNoType = new Regex(
+                    @"^\s*RETURNS\s*$",
+                    RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
                 // This looks for variable declaration statements, where a value is assigned to the variable
                 var declareAndAssignMatcher = new Regex(
                     @"^(?<LeadingWhitespace>\s*)Declare\s+@(?<VariableName>[^\s]+)(?<DataType>[^=]+)\s*=\s*(?<AssignedValue>.+)",
@@ -724,6 +735,21 @@ namespace SQLServer_Stored_Procedure_Converter
                     {
                         // Inside the argument list
                         StoreProcedureArgument(storedProcedureInfo, dataLine);
+                        continue;
+                    }
+
+                    if (returnTypeMatcher.IsMatch(dataLine))
+                    {
+                        var match = returnTypeMatcher.Match(dataLine);
+
+                        storedProcedureInfo.FunctionReturnType = match.Groups["ReturnType"].Value;
+                        continue;
+                    }
+
+                    if (returnTypeMatcherNoType.IsMatch(dataLine))
+                    {
+                        // The return type is on the next line
+                        storedProcedureInfo.FunctionReturnType = cachedLines.Count > 0 ? cachedLines.Dequeue() : reader.ReadLine();
                         continue;
                     }
 

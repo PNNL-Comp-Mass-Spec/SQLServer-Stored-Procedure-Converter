@@ -7,7 +7,9 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class StoredProcedureDDL
     {
-        // Ignore Spelling: auth, plpgsql
+        // Ignore Spelling: auth, citext, plpgsql, udf
+
+        public string FunctionReturnType { get; set; }
 
         /// <summary>
         /// True if a function, false if a stored procedure
@@ -97,6 +99,7 @@ namespace SQLServer_Stored_Procedure_Converter
         {
             ProcedureName = procedureName;
             IsFunction = isFunction;
+            FunctionReturnType = string.Empty;
 
             LocalVariablesToDeclare.Clear();
             ProcedureArguments.Clear();
@@ -135,6 +138,13 @@ namespace SQLServer_Stored_Procedure_Converter
                     writer.WriteLine("    " + item);
                 }
                 writer.WriteLine(")");
+            }
+
+            if (IsFunction)
+            {
+                var returnType = string.IsNullOrWhiteSpace(FunctionReturnType) ? "citext" : FunctionReturnType;
+
+                writer.WriteLine("RETURNS " + returnType);
             }
 
             writer.WriteLine("LANGUAGE plpgsql");
