@@ -1325,9 +1325,18 @@ namespace SQLServer_Stored_Procedure_Converter
                 return true;
             }
 
-            if (dataLine.StartsWith("SET ANSI_NULLS ON", StringComparison.OrdinalIgnoreCase) ||
-                dataLine.StartsWith("SET QUOTED_IDENTIFIER ON", StringComparison.OrdinalIgnoreCase) ||
-                dataLine.StartsWith("GRANT EXECUTE", StringComparison.OrdinalIgnoreCase))
+            // Skip SQL Server specific lines, including:
+            //  SET ANSI_NULLS ON
+            //  SET ANSI_NULLS OFF
+            //  SET QUOTED_IDENTIFIER ON
+            //  SET QUOTED_IDENTIFIER OFF
+
+            // ReSharper disable once StringLiteralTypo
+
+            if (dataLine.StartsWith("SET ANSI_NULLS O", StringComparison.OrdinalIgnoreCase) ||
+                dataLine.StartsWith("SET QUOTED_IDENTIFIER O", StringComparison.OrdinalIgnoreCase) ||
+                dataLine.StartsWith("GRANT EXECUTE", StringComparison.OrdinalIgnoreCase) ||
+                dataLine.StartsWith("WITH SCHEMABINDING", StringComparison.OrdinalIgnoreCase))
             {
                 skipNextLineIfGo = true;
                 return true;
