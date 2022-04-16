@@ -773,10 +773,22 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     // ReSharper restore CommentTypo
 
-                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedIntegerList", "public.udf_parse_delimited_integer_list");
-                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedListOrdered", "public.udf_parse_delimited_list_ordered");
-                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedList", "public.udf_parse_delimited_list");
-                    dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromList", "public.udf_parse_delimited_list");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*AlterEnteredByUserMultiID", "public.alter_entered_by_user_multi_id");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*AlterEnteredByUser", "public.alter_entered_by_user");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*AlterEventLogEntryUserMultiID", "public.alter_event_log_entry_user_multi_id");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*AlterEventLogEntryUser", "public.alter_event_log_entry_user");
+
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedIntegerList", "public.parse_delimited_integer_list");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedListOrdered", "public.parse_delimited_list_ordered");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfParseDelimitedList", "public.parse_delimited_list");
+
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfCombinePaths", "public.combine_paths");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfGetFilename", "public.get_filename");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfTimeStampText", "public.timestamp_text");
+
+                    dataLine = ReplaceText(dataLine, "(dbo.)*udfWhitespaceChars", "public.has_whitespace_chars");
+
+                    dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromList", "public.parse_delimited_list");
 
                     var createTempTableMatch = createTempTableMatcher.Match(dataLine);
                     if (createTempTableMatch.Success)
@@ -794,7 +806,7 @@ namespace SQLServer_Stored_Procedure_Converter
                     dataLine = ReplaceText(dataLine, "#Tmp", "Tmp");
                     dataLine = ReplaceText(dataLine, "#IX", "IX");
 
-                    dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.udf_append_to_text");
+                    dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.append_to_text");
 
                     var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                     if (declareAndAssignMatch.Success)

@@ -119,8 +119,12 @@ namespace SQLServer_Stored_Procedure_Converter
 
             writer.WriteLine();
 
+            var snakeCaseName = StoredProcedureConverter.ConvertNameToSnakeCase(ProcedureName);
+
+            var snakeCaseNameToUse = snakeCaseName.Contains("udf_") ? snakeCaseName.Replace("udf_", string.Empty) : snakeCaseName;
+
             var newProcedureName = Options.ConvertNamesToSnakeCase
-                ? StoredProcedureConverter.ConvertNameToSnakeCase(ProcedureName)
+                ? snakeCaseNameToUse
                 : ProcedureName;
 
             var createProcedure = "CREATE OR REPLACE PROCEDURE " + newProcedureName;
