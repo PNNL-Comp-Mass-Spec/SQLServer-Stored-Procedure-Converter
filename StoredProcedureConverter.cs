@@ -1127,6 +1127,9 @@ namespace SQLServer_Stored_Procedure_Converter
                     UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
                 }
 
+                // Write out the previous procedure (or function)
+                storedProcedureInfo.ToWriterForPostgres(writer);
+
                 return true;
             }
             catch (Exception ex)
