@@ -540,7 +540,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 // This stack tracks nested if and while blocks; it is last in, first out (LIFO)
                 var controlBlockStack = new Stack<ControlBlockTypes>();
 
-                var storedProcedureInfo = new StoredProcedureDDL(mOptions, string.Empty);
+                var storedProcedureInfo = new StoredProcedureDDL(mOptions, this, string.Empty);
 
                 using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
                 using var writer = new StreamWriter(new FileStream(outputFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
@@ -1786,7 +1786,7 @@ namespace SQLServer_Stored_Procedure_Converter
             return match.Result("_$1").ToLower() + match.Result("$2");
         }
 
-        private string VarcharToText(string dataLine)
+        internal string VarcharToText(string dataLine)
         {
             return mVarcharMatcher.Replace(dataLine, "text");
         }

@@ -9,6 +9,8 @@ namespace SQLServer_Stored_Procedure_Converter
     {
         // Ignore Spelling: auth, citext, plpgsql, udf
 
+        private readonly StoredProcedureConverter mProcedureConverter;
+
         public string FunctionReturnType { get; set; }
 
         /// <summary>
@@ -61,7 +63,10 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Constructor
         /// </summary>
-        public StoredProcedureDDL(StoredProcedureConverterOptions options, string procedureName)
+        /// <param name="options"></param>
+        /// <param name="procedureConverter"></param>
+        /// <param name="procedureName"></param>
+        public StoredProcedureDDL(StoredProcedureConverterOptions options, StoredProcedureConverter procedureConverter, string procedureName)
         {
             Options = options;
 
@@ -70,6 +75,7 @@ namespace SQLServer_Stored_Procedure_Converter
             ProcedureArgumentComments = new List<KeyValuePair<string, string>>();
             ProcedureBody = new List<string>();
             ProcedureCommentBlock = new List<string>();
+            mProcedureConverter = procedureConverter;
 
             Reset(procedureName);
         }
@@ -150,7 +156,7 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 var returnType = string.IsNullOrWhiteSpace(FunctionReturnType) ? "citext" : FunctionReturnType;
 
-                writer.WriteLine("RETURNS " + returnType);
+                writer.WriteLine("RETURNS " + mProcedureConverter.VarcharToText(returnType));
             }
 
             writer.WriteLine("LANGUAGE plpgsql");
