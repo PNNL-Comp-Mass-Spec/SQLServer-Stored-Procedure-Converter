@@ -554,6 +554,8 @@ namespace SQLServer_Stored_Procedure_Converter
                         continue;
 
                     var previousTrimmedLine = string.Copy(trimmedLine);
+
+                    // Note that .Trim() removes leading and trailing spaces and tabs
                     trimmedLine = dataLine.Trim();
 
                     if (trimmedLine.Contains("Custom SQL to find"))
