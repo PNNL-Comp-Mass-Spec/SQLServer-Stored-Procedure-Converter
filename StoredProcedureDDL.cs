@@ -127,15 +127,17 @@ namespace SQLServer_Stored_Procedure_Converter
                 ? snakeCaseNameToUse
                 : ProcedureName;
 
-            var createProcedure = "CREATE OR REPLACE PROCEDURE " + newProcedureName;
+            var createMethod = IsFunction
+                ? "CREATE OR REPLACE FUNCTION " + newProcedureName
+                : "CREATE OR REPLACE PROCEDURE " + newProcedureName;
 
             if (ProcedureArguments.Count == 0)
             {
-                writer.WriteLine(createProcedure + "()");
+                writer.WriteLine(createMethod + "()");
             }
             else
             {
-                writer.WriteLine(createProcedure);
+                writer.WriteLine(createMethod);
                 writer.WriteLine("(");
                 foreach (var item in ProcedureArguments)
                 {
@@ -208,8 +210,17 @@ namespace SQLServer_Stored_Procedure_Converter
             writer.WriteLine("$$;");
             writer.WriteLine();
 
-            var procedureNameWithoutSchema = GetNameWithoutSchema(ProcedureName);
-            writer.WriteLine("COMMENT ON PROCEDURE {0} IS '{1}';", newProcedureName, procedureNameWithoutSchema);
+            var nameWithoutSchema = GetNameWithoutSchema(ProcedureName);
+
+            var nameForComment = nameWithoutSchema.StartsWith("udf")
+                ? nameWithoutSchema.Substring(3)
+                : nameWithoutSchema;
+
+            writer.WriteLine(
+                "COMMENT ON {0} {1} IS '{2}';",
+                IsFunction ? "FUNCTION" : "PROCEDURE",
+                newProcedureName,
+                nameForComment);
         }
 
         private void WriteArgumentComments(TextWriter writer)
