@@ -53,6 +53,10 @@ namespace SQLServer_Stored_Procedure_Converter
             @"^\*\*\s+(?<Label>Desc|Auth|Date):\s*(?<Value>.*)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        private readonly Regex mExecStoreReturnMatcher = new(
+            "(?<TargetVariable>@[a-z]+) *=(?<TargetProcedureAndParams>.*)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         /// <summary>
         /// This is used to match varchar(10) or longer
         /// </summary>
@@ -1050,7 +1054,13 @@ namespace SQLServer_Stored_Procedure_Converter
                     if (trimmedLine.StartsWith("exec @myError = ", StringComparison.OrdinalIgnoreCase))
                     {
                         var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                        var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec @myError = ".Length));
+                        var targetProcedureAndParams = trimmedLine.Substring("exec @myError = ".Length);
+                        if (mOptions.ConvertNamesToSnakeCase)
+                        {
+                            targetProcedureAndParams = SnakeCaseFirstWord(targetProcedureAndParams);
+                        }
+
+                        var updatedLine = "Call " + UpdateVariableNames(targetProcedureAndParams);
                         if (updatedLine.Contains("="))
                             updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
 
@@ -1061,7 +1071,24 @@ namespace SQLServer_Stored_Procedure_Converter
                     if (trimmedLine.StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
                     {
                         var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                        var updatedLine = "Call " + UpdateVariableNames(trimmedLine.Substring("exec ".Length));
+                        var targetProcedureAndParams = trimmedLine.Substring("exec ".Length);
+                        if (mOptions.ConvertNamesToSnakeCase)
+                        {
+                            var execMatch = mExecStoreReturnMatcher.Match(targetProcedureAndParams);
+
+                            if (execMatch.Success)
+                            {
+                                targetProcedureAndParams = string.Format("{0} = {1}",
+                                    execMatch.Groups["TargetVariable"],
+                                    SnakeCaseFirstWord(execMatch.Groups["TargetProcedureAndParams"].Value));
+                            }
+                            else
+                            {
+                                targetProcedureAndParams = SnakeCaseFirstWord(targetProcedureAndParams);
+                            }
+                        }
+
+                        var updatedLine = "Call " + UpdateVariableNames(targetProcedureAndParams);
                         if (updatedLine.Contains("="))
                             updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
 
@@ -1356,6 +1383,27 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 cachedLines.Dequeue();
             }
+        }
+
+        private string SnakeCaseFirstWord(string targetProcedureAndParams)
+        {
+            var updatedLine = targetProcedureAndParams.Trim();
+
+            var lineParts = updatedLine.Split(new[] { ' ' }, 2);
+
+            if (lineParts.Length == 1)
+            {
+                return ConvertNameToSnakeCase(lineParts[0]);
+            }
+
+            var targetProcedure = lineParts[0].Equals("VerifySPAuthorized", StringComparison.OrdinalIgnoreCase)
+                ? "VerifySpAuthorized"
+                : lineParts[0];
+
+            if (targetProcedure.StartsWith("dbo.", StringComparison.OrdinalIgnoreCase) && targetProcedure.Length > 4)
+                targetProcedure = "public." + targetProcedure.Substring(4);
+
+            return ConvertNameToSnakeCase(targetProcedure) + " " + lineParts[1];
         }
 
         private void StorePrintVariable(ICollection<string> procedureBody, Match printMatch)
