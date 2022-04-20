@@ -506,7 +506,7 @@ namespace SQLServer_Stored_Procedure_Converter
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var createTempTableMatcher = new Regex(
-                    @"^(?<LeadingWhitespace>\s+)CREATE TABLE #(?<TempTableName>[^\s]+)(?<ExtraInfo>.+)",
+                    @"^(?<LeadingWhitespace>\s+)CREATE TABLE #(?<TempTableName>[^\s]+)(?<ExtraInfo>.*)",
                     RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var mapFileSuccess = LoadColumnNameMapFile(out var tableNameMap, out var columnNameMap);
