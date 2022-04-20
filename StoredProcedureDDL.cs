@@ -147,7 +147,7 @@ namespace SQLServer_Stored_Procedure_Converter
                 writer.WriteLine("(");
                 foreach (var item in ProcedureArguments)
                 {
-                    writer.WriteLine("    " + item);
+                    writer.WriteLine("    " + item.TrimEnd());
                 }
                 writer.WriteLine(")");
             }
@@ -180,7 +180,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         argumentCommentsAdded = true;
                     }
                 }
-                writer.WriteLine(item);
+                writer.WriteLine(item.TrimEnd());
             }
 
             if (ProcedureArgumentComments.Count > 0 && !argumentCommentsAdded)
@@ -209,7 +209,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             foreach (var item in ProcedureBody)
             {
-                writer.WriteLine(item);
+                writer.WriteLine(item.TrimEnd());
             }
 
             writer.WriteLine("END");
@@ -245,7 +245,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             foreach (var argumentComment in ProcedureArgumentComments)
             {
-                writer.WriteLine(formatString, argumentComment.Key, argumentComment.Value);
+                writer.WriteLine(formatString, argumentComment.Key, argumentComment.Value.TrimEnd());
             }
             writer.WriteLine("**");
         }
