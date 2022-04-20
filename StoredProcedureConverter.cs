@@ -527,6 +527,8 @@ namespace SQLServer_Stored_Procedure_Converter
                 // This queue tracks lines read from the input file; it is first in, first out (FIFO)
                 var cachedLines = new Queue<string>();
 
+                var tempTableDropStatements = new List<string>();
+
                 var updateSchemaOnTables =
                     !string.IsNullOrWhiteSpace(mOptions.SchemaName) &&
                     !mOptions.SchemaName.Equals("public", StringComparison.OrdinalIgnoreCase);
@@ -588,6 +590,12 @@ namespace SQLServer_Stored_Procedure_Converter
                         SkipNextLineIfBlank(reader, cachedLines);
                         skipNextLineIfGo = false;
                         continue;
+                    }
+
+                    if (trimmedLine.Equals("GO", StringComparison.OrdinalIgnoreCase) && tempTableDropStatements.Count > 0)
+                    {
+                        storedProcedureInfo.ProcedureBody.AddRange(tempTableDropStatements);
+                        tempTableDropStatements.Clear();
                     }
 
                     if (!string.IsNullOrWhiteSpace(mostRecentUpdateOrDeleteTable) && string.IsNullOrWhiteSpace(trimmedLine))
@@ -803,16 +811,17 @@ namespace SQLServer_Stored_Procedure_Converter
                     dataLine = ReplaceLeadingTabs(dataLine);
 
                     var createTempTableMatch = createTempTableMatcher.Match(dataLine);
+
                     if (createTempTableMatch.Success)
                     {
                         dataLine = string.Format(
-                            "{0}DROP TABLE IF EXISTS {1};{2}{2}" +
-                            "{0}CREATE TEMP TABLE {1}{3}",
+                            "{0}CREATE TEMP TABLE {1}{2}",
                             createTempTableMatch.Groups["LeadingWhitespace"],
                             createTempTableMatch.Groups["TempTableName"],
-                            Environment.NewLine,
                             createTempTableMatch.Groups["ExtraInfo"]
                         );
+
+                        tempTableDropStatements.Add("    DROP TABLE " + createTempTableMatch.Groups["TempTableName"]);
                     }
 
                     dataLine = ReplaceText(dataLine, "#Tmp", "Tmp");
