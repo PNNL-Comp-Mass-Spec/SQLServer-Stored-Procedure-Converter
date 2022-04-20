@@ -74,10 +74,11 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// This finds lines like:
         /// Set NoCount On
+        /// Set NoCount Off
         /// Set XACT_ABORT, NoCount on
         /// </summary>
         private readonly Regex mSetNoCountMatcher = new(
-            @"^\s+Set.+(XACT_ABORT|NoCount).+On$",
+            @"^\s*Set +(XACT_ABORT|NoCount) +(On|Off) *$",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
