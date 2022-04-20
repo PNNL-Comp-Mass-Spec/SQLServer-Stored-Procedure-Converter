@@ -583,7 +583,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         continue;
                     }
 
-                    if (skipNextLineIfGo && dataLine.StartsWith("GO", StringComparison.OrdinalIgnoreCase))
+                    if (skipNextLineIfGo && trimmedLine.Equals("GO", StringComparison.OrdinalIgnoreCase))
                     {
                         SkipNextLineIfBlank(reader, cachedLines);
                         skipNextLineIfGo = false;
@@ -595,11 +595,11 @@ namespace SQLServer_Stored_Procedure_Converter
                         mostRecentUpdateOrDeleteTable = string.Empty;
                     }
 
-                    if (SkipLine(dataLine, out skipNextLineIfGo))
+                    if (SkipLine(trimmedLine, out skipNextLineIfGo))
                         continue;
 
-                    if (dataLine.StartsWith("CREATE PROCEDURE", StringComparison.OrdinalIgnoreCase) ||
-                        dataLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase))
+                    if (trimmedLine.StartsWith("CREATE PROCEDURE", StringComparison.OrdinalIgnoreCase) ||
+                        trimmedLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase))
                     {
                         if (!string.IsNullOrWhiteSpace(storedProcedureInfo.ProcedureName))
                         {
@@ -631,26 +631,27 @@ namespace SQLServer_Stored_Procedure_Converter
                         skipNextLineIfGo = false;
                         controlBlockStack.Clear();
 
-                        var isFunction = dataLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase);
+                        var isFunction = trimmedLine.StartsWith("CREATE FUNCTION", StringComparison.OrdinalIgnoreCase);
 
                         var createKeywords = isFunction ? "CREATE FUNCTION" : "CREATE PROCEDURE";
 
-                        var matchedName = procedureNameMatcher.Match(dataLine);
+                        var matchedName = procedureNameMatcher.Match(trimmedLine);
                         string procedureNameWithSchema;
+
                         if (matchedName.Success)
                         {
                             procedureNameWithSchema = schemaName + "." + matchedName.Groups["ProcedureName"].Value;
                         }
                         else
                         {
-                            procedureNameWithSchema = schemaName + "." + dataLine.Substring(createKeywords.Length + 1);
+                            procedureNameWithSchema = schemaName + "." + trimmedLine.Substring(createKeywords.Length + 1);
                         }
 
                         storedProcedureInfo.Reset(procedureNameWithSchema, isFunction);
                         continue;
                     }
 
-                    if (!foundStartOfProcedureCommentBlock && dataLine.StartsWith("/*****************"))
+                    if (!foundStartOfProcedureCommentBlock && trimmedLine.StartsWith("/*****************"))
                     {
                         foundStartOfProcedureCommentBlock = true;
                         insideDateBlock = false;
@@ -658,7 +659,7 @@ namespace SQLServer_Stored_Procedure_Converter
                         continue;
                     }
 
-                    if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock && dataLine.EndsWith("*****************/"))
+                    if (foundStartOfProcedureCommentBlock && !foundEndOfProcedureCommentBlock && trimmedLine.EndsWith("*****************/"))
                     {
                         foundEndOfProcedureCommentBlock = true;
                         if (insideDateBlock)
