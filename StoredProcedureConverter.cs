@@ -64,6 +64,8 @@ namespace SQLServer_Stored_Procedure_Converter
             @"n*varchar\((\d{2,}|max)\)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        private readonly Regex mLeadingTabMatcher = new(@"^\t+", RegexOptions.Compiled);
+
         /// <summary>
         /// This finds leading whitespace (spaces and tabs)
         /// </summary>
@@ -796,6 +798,8 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromList", "public.parse_delimited_list");
 
+                    dataLine = ReplaceLeadingTabs(dataLine);
+
                     var createTempTableMatch = createTempTableMatcher.Match(dataLine);
                     if (createTempTableMatch.Success)
                     {
@@ -1339,6 +1343,17 @@ namespace SQLServer_Stored_Procedure_Converter
         private string ReplaceText(string dataLine, string textToFind, string replacementText)
         {
             return Regex.Replace(dataLine, textToFind, replacementText, RegexOptions.IgnoreCase);
+        }
+
+        private string ReplaceLeadingTabs(string dataLine)
+        {
+            var match = mLeadingTabMatcher.Match(dataLine);
+            if (!match.Success)
+                return dataLine;
+
+            var spaceCount = match.Length * 4;
+
+            return mLeadingTabMatcher.Replace(dataLine, new string(' ', spaceCount));
         }
 
         private string ReplaceTabs(string dataLine)
