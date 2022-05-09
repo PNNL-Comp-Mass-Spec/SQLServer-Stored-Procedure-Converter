@@ -23,25 +23,11 @@ namespace SQLServer_Stored_Procedure_Converter
         }
 
         /// <summary>
-        /// Match any lowercase letter
-        /// </summary>
-        private static readonly Regex mAnyLowerMatcher = new(
-            "[a-z]",
-            RegexOptions.Compiled | RegexOptions.Singleline);
-
-        /// <summary>
         /// This is used when backtracking and forward tracking to find lines of code that should be processed as a block
         /// </summary>
         private static readonly Regex mBlockBoundaryMatcher = new(
             @"^\s*(Begin|End|If|Else)\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        /// <summary>
-        /// Match a lowercase letter followed by an uppercase letter
-        /// </summary>
-        private static readonly Regex mCamelCaseMatcher = new(
-            "(?<LowerLetter>[a-z])(?<UpperLetter>[A-Z])",
-            RegexOptions.Compiled);
 
         /// <summary>
         /// This is used to match Desc, Auth, or Date keywords in a comment block
@@ -229,28 +215,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <param name="objectName"></param>
         public static string ConvertNameToSnakeCase(string objectName)
         {
-            if (!mAnyLowerMatcher.IsMatch(objectName))
-            {
-                // objectName contains no lowercase letters; simply change to lowercase and return
-                return objectName.ToLower();
-            }
-
-            // Need to convert MyEMSL to lower case to avoid misplaced underscores in the new name
-            var index = objectName.IndexOf("MyEMSL", StringComparison.Ordinal);
-
-            // ReSharper disable once StringLiteralTypo
-            if (index >= 0)
-            {
-                objectName = objectName.Replace("MyEMSL", "Myemsl");
-            }
-
-            var match = mCamelCaseMatcher.Match(objectName);
-
-            var updatedName = match.Success
-                ? mCamelCaseMatcher.Replace(objectName, "${LowerLetter}_${UpperLetter}")
-                : objectName;
-
-            return updatedName.ToLower();
+            return NameUpdater.ConvertNameToSnakeCase(objectName);
         }
 
         /// <summary>
@@ -1313,6 +1278,7 @@ namespace SQLServer_Stored_Procedure_Converter
             // Keys in this dictionary are table names; values are the order that the table names appear in the current block of lines
             var referencedTables = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+            // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var dataLine in currentBlock)
             {
                 var updatedLine = NameUpdater.FindAndUpdateTableNames(tableNameMap, referencedTables, dataLine, updateSchemaOnTables);
