@@ -1310,7 +1310,8 @@ namespace SQLServer_Stored_Procedure_Converter
 
             var updatedLines = new List<string>();
 
-            var referencedTables = new SortedSet<string>();
+            // Keys in this dictionary are table names; values are the order that the table names appear in the current block of lines
+            var referencedTables = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var dataLine in currentBlock)
             {
