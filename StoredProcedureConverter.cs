@@ -1304,6 +1304,8 @@ namespace SQLServer_Stored_Procedure_Converter
             IReadOnlyList<string> currentBlock,
             bool updateSchemaOnTables)
         {
+            const int MINIMUM_COLUMN_NAME_LENGTH_TO_RENAME = 3;
+
             // Step through the columns loaded from the merged ColumnNameMap.txt file
 
             var updatedLines = new List<string>();
@@ -1324,7 +1326,7 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 var dataLine = updatedLines[i];
 
-                var workingCopy = NameUpdater.UpdateColumnNames(columnNameMap, referencedTables, dataLine, false);
+                var workingCopy = NameUpdater.UpdateColumnNames(columnNameMap, referencedTables, dataLine, false, MINIMUM_COLUMN_NAME_LENGTH_TO_RENAME);
 
                 if (currentBlock[i].Equals(workingCopy))
                 {
