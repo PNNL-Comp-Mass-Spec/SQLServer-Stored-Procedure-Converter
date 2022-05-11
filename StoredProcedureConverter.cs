@@ -1293,7 +1293,7 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 var dataLine = updatedLines[i];
 
-                var workingCopy = NameUpdater.UpdateColumnNames(columnNameMap, referencedTables, dataLine, false, MINIMUM_COLUMN_NAME_LENGTH_TO_RENAME);
+                var workingCopy = NameUpdater.UpdateColumnNames(columnNameMap, referencedTables, dataLine, false, false, MINIMUM_COLUMN_NAME_LENGTH_TO_RENAME);
 
                 if (currentBlock[i].Equals(workingCopy))
                 {
