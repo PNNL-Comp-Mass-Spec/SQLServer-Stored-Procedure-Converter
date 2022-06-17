@@ -984,6 +984,20 @@ namespace SQLServer_Stored_Procedure_Converter
                         continue;
                     }
 
+                    if (trimmedLine.Equals("continue"))
+                    {
+                        // Add a semicolon
+                        AppendLine(storedProcedureInfo.ProcedureBody, dataLine + ";");
+                        continue;
+                    }
+
+                    if (trimmedLine.Equals("continue;"))
+                    {
+                        // Store as-is
+                        AppendLine(storedProcedureInfo.ProcedureBody, dataLine);
+                        continue;
+                    }
+
                     if (trimmedLine.StartsWith("While ", StringComparison.OrdinalIgnoreCase))
                     {
                         // While statement
