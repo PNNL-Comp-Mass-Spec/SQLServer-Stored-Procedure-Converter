@@ -972,6 +972,18 @@ namespace SQLServer_Stored_Procedure_Converter
                         continue;
                     }
 
+                    // ReSharper disable once ConvertIfStatementToSwitchStatement
+                    if (trimmedLine.Equals("break") || trimmedLine.Equals("break;"))
+                    {
+                        // Use 'exit;' to break out of a loop
+                        dataLine = dataLine.Replace("break", "exit");
+                        if (!dataLine.EndsWith(";"))
+                            dataLine += ";";
+
+                        AppendLine(storedProcedureInfo.ProcedureBody, dataLine);
+                        continue;
+                    }
+
                     if (trimmedLine.StartsWith("While ", StringComparison.OrdinalIgnoreCase))
                     {
                         // While statement
