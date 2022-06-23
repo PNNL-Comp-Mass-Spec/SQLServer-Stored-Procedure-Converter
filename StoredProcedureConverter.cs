@@ -771,9 +771,26 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     dataLine = ReplaceText(dataLine, "(dbo.)*udfWhitespaceChars", "public.has_whitespace_chars");
 
+                    // ReSharper disable once StringLiteralTypo
+                    dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromListDelim", "public.parse_delimited_list");
                     dataLine = ReplaceText(dataLine, "(dbo.)*MakeTableFromList", "public.parse_delimited_list");
 
                     dataLine = ReplaceLeadingTabs(dataLine);
+
+                    if (dataLine.IndexOf("LTrim(RTrim", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        dataLine = ReplaceText(dataLine, @"LTrim\(RTrim", "Trim");
+
+                        var trimIndex = dataLine.IndexOf("Trim(", StringComparison.OrdinalIgnoreCase);
+
+                        // Replace the next occurrence of )) with )
+                        var parenthesesIndex = dataLine.IndexOf("))", Math.Max(0, trimIndex), StringComparison.OrdinalIgnoreCase);
+
+                        if (parenthesesIndex > 0)
+                        {
+                            dataLine = dataLine.Substring(0, parenthesesIndex) + dataLine.Substring(parenthesesIndex + 1);
+                        }
+                    }
 
                     var createTempTableMatch = createTempTableMatcher.Match(dataLine);
 
