@@ -420,7 +420,11 @@ namespace SQLServer_Stored_Procedure_Converter
                 // This looks for lines that start with whitespace then )
                 var argumentListEndMatcher = new Regex(@"^\s*\)", RegexOptions.Compiled);
 
-                // This looks for lines that have ()
+                // This looks for lines of the form
+                // ** Copyright 2005, Battelle Memorial Institute
+                var copyrightMatcher = new Regex(@"\*\* Copyright 20\d\d, Battelle Memorial Institute", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                // This looks for lines that start with ()
                 var emptyArgumentListMatcher = new Regex(@"^\s*\(\s*\)", RegexOptions.Compiled);
 
                 // This looks for the Return type of functions
@@ -521,6 +525,13 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     // Skip lines that are null, but don't skip blank lines
                     if (dataLine == null)
+                        continue;
+
+                    // Skip Copyright lines
+                    if (dataLine.Trim().Equals("** Pacific Northwest National Laboratory, Richland, WA"))
+                        continue;
+
+                    if (copyrightMatcher.IsMatch(dataLine))
                         continue;
 
                     var previousTrimmedLine = string.Copy(trimmedLine);
