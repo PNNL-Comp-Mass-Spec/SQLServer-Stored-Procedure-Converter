@@ -1,7 +1,7 @@
 # SQL Server Stored Procedure Converter
 
 This program converts SQL Server stored procedures to PostgreSQL compatible stored procedures.
-The converted procedures will typically need additional manual adjustments to become usable.
+The converted procedures will need additional manual adjustments to become usable with Postgres.
 
 ## Console Switches
 
