@@ -40,7 +40,7 @@ namespace SQLServer_Stored_Procedure_Converter
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly Regex mExecStoreReturnMatcher = new(
-            "(?<TargetVariable>@[a-z]+) *=(?<TargetProcedureAndParams>.*)",
+            @"exec\s+(?<TargetVariable>@[a-z]+) *=(?<TargetProcedureAndParams>.*)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
@@ -1106,29 +1106,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     if (trimmedLine.StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
                     {
-                        var leadingWhitespace = GetLeadingWhitespace(dataLine);
-                        var targetProcedureAndParams = trimmedLine.Substring("exec ".Length);
-                        if (mOptions.ConvertNamesToSnakeCase)
-                        {
-                            var execMatch = mExecStoreReturnMatcher.Match(targetProcedureAndParams);
-
-                            if (execMatch.Success)
-                            {
-                                targetProcedureAndParams = string.Format("{0} = {1}",
-                                    execMatch.Groups["TargetVariable"],
-                                    SnakeCaseFirstWord(execMatch.Groups["TargetProcedureAndParams"].Value));
-                            }
-                            else
-                            {
-                                targetProcedureAndParams = SnakeCaseFirstWord(targetProcedureAndParams);
-                            }
-                        }
-
-                        var updatedLine = "Call " + UpdateVariableNames(targetProcedureAndParams);
-                        if (updatedLine.Contains("="))
-                            updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
-
-                        AppendLine(storedProcedureInfo.ProcedureBody, leadingWhitespace + updatedLine);
+                        UpdateAndAppendExecLine(storedProcedureInfo.ProcedureBody, dataLine, trimmedLine);
                         continue;
                     }
 
@@ -1642,6 +1620,34 @@ namespace SQLServer_Stored_Procedure_Converter
             storedProcedureInfo.LocalVariablesToDeclare.Add(updatedDeclaration);
         }
 
+        private void UpdateAndAppendExecLine(ICollection<string> procedureBody, string dataLine, string trimmedLine)
+        {
+            var leadingWhitespace = GetLeadingWhitespace(dataLine);
+            var targetProcedureAndParams = trimmedLine.Substring("exec ".Length);
+
+            if (mOptions.ConvertNamesToSnakeCase)
+            {
+                var execMatch = mExecStoreReturnMatcher.Match(trimmedLine);
+
+                if (execMatch.Success)
+                {
+                    targetProcedureAndParams = string.Format("{0} = {1}",
+                        execMatch.Groups["TargetVariable"],
+                        SnakeCaseFirstWord(execMatch.Groups["TargetProcedureAndParams"].Value));
+                }
+                else
+                {
+                    targetProcedureAndParams = SnakeCaseFirstWord(targetProcedureAndParams);
+                }
+            }
+
+            var updatedLine = "Call " + UpdateVariableNames(targetProcedureAndParams);
+            if (updatedLine.Contains("="))
+                updatedLine = ReplaceText(updatedLine, @"\s*=\s*", " => ");
+
+            AppendLine(procedureBody, leadingWhitespace + updatedLine);
+        }
+
         private void UpdateAndAppendLine(ICollection<string> procedureBody, string dataLine)
         {
             dataLine = UpdateVariableNames(dataLine);
@@ -1658,6 +1664,12 @@ namespace SQLServer_Stored_Procedure_Converter
             {
                 // Change any instance of varchar(10) or larger to text
                 dataLine = VarcharToText(dataLine);
+            }
+
+            if (dataLine.Trim().StartsWith("exec ", StringComparison.OrdinalIgnoreCase))
+            {
+                UpdateAndAppendExecLine(procedureBody, dataLine, dataLine.Trim());
+                return;
             }
 
             AppendLine(procedureBody, dataLine);
