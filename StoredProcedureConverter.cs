@@ -534,6 +534,9 @@ namespace SQLServer_Stored_Procedure_Converter
                     if (copyrightMatcher.IsMatch(dataLine))
                         continue;
 
+                    // Replace smart quotes with straight quotes
+                    dataLine = PunctuationUpdater.ProcessLine(dataLine);
+
                     var previousTrimmedLine = string.Copy(trimmedLine);
 
                     // Note that .Trim() removes leading and trailing spaces and tabs
@@ -1732,6 +1735,7 @@ namespace SQLServer_Stored_Procedure_Converter
 
             return UpdateConcatenationOperator(updatedLine);
         }
+
         private string UpdateSetStatement(string dataLine)
         {
             var assignVariableMatch = mSetStatementMatcher.Match(dataLine);
