@@ -17,7 +17,7 @@ AS $$
 **  Auth:   mem
 **  Date:   01/16/2009 mem - Initial version
 **          09/09/2009 mem - Added support for 'ManagerUpdateRequired' already being False
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -125,7 +125,7 @@ AS $$
 **  Auth:   mem
 **  Date:   03/25/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -205,7 +205,7 @@ BEGIN
         RAISE INFO '%', _s;
         _enteredBy := session_user || '_Simulated';
     Else
-        Exec _result = sp_executesql _s, _paramDef, _targetIDMatch = _targetIDMatch output, _enteredBy = _enteredBy output;
+        Call _result => sp_executesql _s, _paramDef, _targetIDMatch => _targetIDMatch output, _enteredBy => _enteredBy output;
     End If;
     --
     GET DIAGNOSTICS _myRowCount = ROW_COUNT;
@@ -252,14 +252,14 @@ BEGIN
                 If _previewSql <> 0 Then
                     RAISE INFO '%', @S;
                 Else
-                    Exec (_s);
+                    Call (_s);
                 End If;
                 --
                 GET DIAGNOSTICS _myRowCount = ROW_COUNT;
 
                 If _myError <> 0 Then
                     _message := 'Error updating ' || _entryDescription;
-                    Call PostLogEntry 'Error', _message, 'AlterEventLogEntryUser'
+                    Call post_log_entry 'Error', _message, 'AlterEventLogEntryUser'
                     Return;
                 Else
                     _message := 'Updated ' || _entryDescription || ' to indicate "' || _enteredByNew || '"';
@@ -277,7 +277,7 @@ BEGIN
                 If _previewSql <> 0 Then
                     RAISE INFO '%', @S;
                 Else
-                    Exec (_s);
+                    Call (_s);
                 End If;
                 --
                 GET DIAGNOSTICS _myRowCount = ROW_COUNT;
@@ -334,7 +334,7 @@ AS $$
 **  Auth:   mem
 **  Date:   03/28/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -412,7 +412,7 @@ BEGIN
 
     ------------------------------------------------
     -- Parse the values in TmpIDUpdateList
-    -- Call AlterEnteredByUser for each
+    -- Call public.alter_entered_by_user for each
     ------------------------------------------------
 
     _countUpdated := 0;
@@ -440,7 +440,7 @@ BEGIN
         If _myRowCount = 0 Then
             _continue := 0;
         Else
-            Call AlterEnteredByUser
+            Call alter_entered_by_user
                                 _targetTableName,
                                 _targetIDColumnName,
                                 _targetID,
@@ -507,7 +507,7 @@ AS $$
 **  Date:   02/29/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
 **          03/30/2009 mem - Ported to the Manager Control DB
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -563,7 +563,7 @@ BEGIN
         SELECT EL.event_id, INTO _eventID
                _enteredBy = EL.entered_by
         FROM mc.t_event_log EL INNER JOIN
-                (SELECT MAX(event_id) AS event_id
+                (SELECT MAX(event_id) AS Event_ID
                  FROM dbo.t_event_log
                  WHERE target_type = _targetType AND
                        target_id = _targetID AND
@@ -582,7 +582,7 @@ BEGIN
         SELECT EL.event_id, INTO _eventID
                _enteredBy = EL.entered_by
         FROM mc.t_event_log EL INNER JOIN
-                (SELECT MAX(event_id) AS event_id
+                (SELECT MAX(event_id) AS Event_ID
                  FROM dbo.t_event_log
                  WHERE target_type = _targetType AND
                        target_id = _targetID AND
@@ -630,13 +630,13 @@ BEGIN
 
                 If _myError <> 0 Then
                     _message := 'Error updating ' || _entryDescription;
-                    Call PostLogEntry 'Error', _message, 'AlterEventLogEntryUser'
+                    Call post_log_entry 'Error', _message, 'AlterEventLogEntryUser'
                     Return;
                 Else
                     _message := 'Updated ' || _entryDescription || ' to indicate "' || _enteredByNew || '"';
                 End If;
             Else
-                SELECT event_id, target_type, target_id, target_state,
+                SELECT event_id, target_type, target_id, Target_State,
                        prev_target_state, entered,
                        entered_by AS Entered_By_Old,
                        _enteredByNew AS Entered_By_New
@@ -696,7 +696,7 @@ AS $$
 **  Date:   02/29/2008 mem - Initial version (Ticket: #644)
 **          05/23/2008 mem - Expanded _entryDescription to varchar(512)
 **          03/30/2009 mem - Ported to the Manager Control DB
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -773,7 +773,7 @@ BEGIN
 
     ------------------------------------------------
     -- Parse the values in TmpIDUpdateList
-    -- Call AlterEventLogEntryUser for each
+    -- Call public.alter_event_log_entry_user for each
     ------------------------------------------------
 
     _countUpdated := 0;
@@ -801,7 +801,7 @@ BEGIN
         If _myRowCount = 0 Then
             _continue := 0;
         Else
-            Call AlterEventLogEntryUser
+            Call alter_event_log_entry_user
                                 _targetType,
                                 _targetID,
                                 _targetState,
@@ -856,13 +856,15 @@ AS $$
 **  Date:   05/14/2015 mem - Initial version
 **          02/25/2016 mem - Add Set XACT_ABORT On
 **          04/22/2016 mem - Now updating M_Comment in T_OldManagers
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
     _myRowCount int := 0;
     _moveParams text := 'Move params transaction';
 BEGIN
+    Set XACT_ABORT, NoCount On
+
     ---------------------------------------------------
     -- Validate the inputs
     ---------------------------------------------------
@@ -870,8 +872,6 @@ BEGIN
     _mgrList := Coalesce(_mgrList, '');
     _infoOnly := Coalesce(_infoOnly, 1);
     _message := '';
-
-    DROP TABLE IF EXISTS TmpManagerList;
 
     CREATE TEMP TABLE TmpManagerList (
         Manager_Name text NOT NULL,
@@ -884,7 +884,7 @@ BEGIN
     ---------------------------------------------------
     --
 
-    Call ParseManagerNameList _mgrList, _removeUnknownManagers => 0
+    Call parse_manager_name_list _mgrList, _removeUnknownManagers => 0
 
     If Not Exists (Select * from TmpManagerList) Then
         _message := '_mgrList was empty; no match in mc.t_mgrs to ' || _mgrList;
@@ -1083,6 +1083,7 @@ BEGIN
 
 Done:
     RETURN _myError
+    DROP TABLE TmpManagerList
 
 END
 $$;
@@ -1104,11 +1105,11 @@ AS $$
 **  Date:   05/09/2008
 **          10/09/2009 mem - Changed _managerTypeIDList to 11
 **          06/09/2011 mem - Now calling EnableDisableAllManagers
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
-    Call EnableDisableAllManagers _managerTypeIDList => '11', _managerNameList => '', _enable => 0,
+    Call enable_disable_all_managers _managerTypeIDList => '11', _managerNameList => '', _enable => 0,
                                              _previewUpdates=@PreviewUpdates, _message = _message output
 
     Return _myError
@@ -1135,11 +1136,11 @@ AS $$
 **          07/24/2008 mem - Changed _managerTypeIDList from '2,3,8' to '8'
 **                         - Note that we do not include 15=CaptureTaskManager because capture tasks can still occur when the archive is unavailable
 **                         - However, you should run Stored Procedure EnableDisableArchiveStepTools in the DMS_Capture database to disable the archive-dependent step tools
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
-    Call EnableDisableAllManagers _managerTypeIDList => '8', _managerNameList => '', _enable => 0,
+    Call enable_disable_all_managers _managerTypeIDList => '8', _managerNameList => '', _enable => 0,
                                              _previewUpdates=@PreviewUpdates, _message = _message output
 
     Return _myError
@@ -1163,11 +1164,11 @@ AS $$
 **  Auth:   mem
 **  Date:   07/24/2008
 **          10/09/2009 mem - Changed _managerTypeIDList to 11
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
-    Call EnableDisableAllManagers _managerTypeIDList => '11', _managerNameList => '%SeqCluster%', _enable => 0,
+    Call enable_disable_all_managers _managerTypeIDList => '11', _managerNameList => '%SeqCluster%', _enable => 0,
                                              _previewUpdates=@PreviewUpdates, _message = _message output
 
     Return _myError
@@ -1206,7 +1207,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   08/26/2013 mem - Initial release
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1256,9 +1257,9 @@ BEGIN
         If _infoOnly <> 0 Then
             SELECT _newParamTypeID AS TypeID,;
         End If;
-                REPLACE("value", _paramValueSearchText, _paramValueReplaceText) AS "value",
+                REPLACE("value", _paramValueSearchText, _paramValueReplaceText) AS "Value",
                 mgr_id,
-                Coalesce(_commentOverride, '') AS "comment"
+                Coalesce(_commentOverride, '') AS "Comment"
             FROM mc.t_param_value
             WHERE (type_id = _sourceParamTypeID)
         Else
@@ -1266,10 +1267,10 @@ BEGIN
                                     "value",
                                     mgr_id,
                                     "comment" )
-            SELECT _newParamTypeID AS type_id,
-                REPLACE("value", _paramValueSearchText, _paramValueReplaceText) AS "value",
+            SELECT _newParamTypeID AS TypeID,
+                REPLACE("value", _paramValueSearchText, _paramValueReplaceText) AS "Value",
                 mgr_id,
-                Coalesce(_commentOverride, '') AS "comment"
+                Coalesce(_commentOverride, '') AS "Comment"
             FROM mc.t_param_value
             WHERE (type_id = _sourceParamTypeID)
         --
@@ -1278,9 +1279,9 @@ BEGIN
         If _infoOnly <> 0 Then
             SELECT _newParamTypeID AS TypeID,;
         End If;
-                   Coalesce(_paramValueOverride, "value") AS "value",
+                   Coalesce(_paramValueOverride, "value") AS "Value",
                    mgr_id,
-                   Coalesce(_commentOverride, '') AS "comment"
+                   Coalesce(_commentOverride, '') AS "Comment"
             FROM mc.t_param_value
             WHERE (type_id = _sourceParamTypeID)
         Else
@@ -1288,10 +1289,10 @@ BEGIN
                                       "value",
                                       mgr_id,
                                       "comment" )
-            SELECT _newParamTypeID AS type_id,
-                   Coalesce(_paramValueOverride, "value") AS "value",
+            SELECT _newParamTypeID AS TypeID,
+                   Coalesce(_paramValueOverride, "value") AS "Value",
                    mgr_id,
-                   Coalesce(_commentOverride, '') AS "comment"
+                   Coalesce(_commentOverride, '') AS "Comment"
             FROM mc.t_param_value
             WHERE (type_id = _sourceParamTypeID)
         --
@@ -1327,7 +1328,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   10/10/2014 mem - Initial release
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1377,7 +1378,7 @@ BEGIN
     If _infoOnly <> 0 Then
             SELECT Source.type_id,
                    Source.value,
-                   _targetMgrID AS mgr_id,
+                   _targetMgrID AS MgrID,
                    Source.comment
             FROM mc.t_param_value AS Source
                  LEFT OUTER JOIN ( SELECT type_id
@@ -1388,10 +1389,10 @@ BEGIN
                   ExistingParams.type_id IS NULL
 
     Else
-        INSERT INTO mc.t_param_value (type_id, value, mgr_id, comment)
+        INSERT INTO mc.t_param_value (type_id, value, mgr_id, Comment)
         SELECT Source.type_id,
                Source.value,
-               _targetMgrID AS mgr_id,
+               _targetMgrID AS MgrID,
                Source.comment
         FROM mc.t_param_value AS Source
              LEFT OUTER JOIN ( SELECT type_id
@@ -1424,11 +1425,11 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   06/09/2011 mem - Initial Version
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 BEGIN
-    Call EnableDisableAllManagers _managerTypeIDList => '8,15', _managerNameList => 'All', _enable => 1,
+    Call enable_disable_all_managers _managerTypeIDList => '8,15', _managerNameList => 'All', _enable => 1,
                                              _previewUpdates=@PreviewUpdates, _message = _message output
 
     Return _myError
@@ -1461,7 +1462,7 @@ AS $$
 **  Date:   05/09/2008
 **          06/09/2011 - Created by extending code in DisableAllManagers
 **                     - Now filtering on MT_Active > 0 in T_MgrTypes
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1479,8 +1480,6 @@ BEGIN
     _previewUpdates := Coalesce(_previewUpdates, 0);
     _message := '';
 
-    DROP TABLE IF EXISTS TmpManagerTypeIDs;
-
     CREATE TEMP TABLE TmpManagerTypeIDs (
         MgrTypeID int NOT NULL
     )
@@ -1490,7 +1489,7 @@ BEGIN
         --
         INSERT INTO TmpManagerTypeIDs (MgrTypeID)
         SELECT DISTINCT Value
-        FROM public.udf_parse_delimited_integer_list(_managerTypeIDList, ',')
+        FROM public.parse_delimited_integer_list(_managerTypeIDList, ',')
         ORDER BY Value
         --
         GET DIAGNOSTICS _myRowCount = ROW_COUNT;
@@ -1540,12 +1539,14 @@ BEGIN
         If _myRowCount = 0 Then
             _continue := 0;
         Else
-            Call EnableDisableManagers _enable => @Enable, _managerTypeID => @MgrTypeID, _managerNameList => @ManagerNameList, _previewUpdates => _previewUpdates, _message => _message output
+            Call enable_disable_managers _enable => @Enable, _managerTypeID => @MgrTypeID, _managerNameList => @ManagerNameList, _previewUpdates => _previewUpdates, _message => _message output
         End If;
     End Loop;
 
 Done:
     Return _myError
+
+    DROP TABLE TmpManagerTypeIDs
 
 END
 $$;
@@ -1578,7 +1579,7 @@ AS $$
 **                         - Now allowing _managerNameList to be All when _enable = 1
 **          10/12/2017 mem - Allow _managerTypeID to be 0 if _managerNameList is provided
 **          03/28/2018 mem - Use different messages when updating just one manager
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1646,8 +1647,6 @@ BEGIN
     -- Creata a temporary table
     -----------------------------------------------
 
-    DROP TABLE IF EXISTS TmpManagerList;
-
     CREATE TEMP TABLE TmpManagerList (
         Manager_Name text NOT NULL
     )
@@ -1655,7 +1654,7 @@ BEGIN
     If char_length(_managerNameList) > 0 And _managerNameList <> 'All' Then
         -- Populate TmpMangerList using ParseManagerNameList
 
-        Call ParseManagerNameList _managerNameList, _removeUnknownManagers => 1, _message => @message output
+        Call parse_manager_name_list _managerNameList, _removeUnknownManagers => 1, _message => @message output
 
         If _myError <> 0 Then
             If char_length(_message) = 0 Then
@@ -1848,6 +1847,8 @@ BEGIN
 Done:
     Return _myError
 
+    DROP TABLE TmpManagerList
+
 END
 $$;
 
@@ -1875,7 +1876,7 @@ AS $$
 **  Auth:   mem
 **  Date:   03/28/2018 mem - Initial version
 **          03/29/2018 mem - Add parameter _addMgrParamsIfMissing
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -1915,15 +1916,13 @@ BEGIN
     -- Creata a temporary table
     -----------------------------------------------
 
-    DROP TABLE IF EXISTS TmpManagerList;
-
     CREATE TEMP TABLE TmpManagerList (
         Manager_Name text NOT NULL
     )
 
     -- Populate TmpMangerList using ParseManagerNameList
     --
-    Call ParseManagerNameList _managerNameList, _removeUnknownManagers => 1, _message => @message output
+    Call parse_manager_name_list _managerNameList, _removeUnknownManagers => 1, _message => @message output
 
     If _myError <> 0 Then
         If char_length(_message) = 0 Then
@@ -2147,6 +2146,8 @@ BEGIN
 Done:
     Return _myError
 
+    DROP TABLE TmpManagerList
+
 END
 $$;
 
@@ -2177,7 +2178,7 @@ AS $$
 **  Date:   05/18/2017 mem - Initial version
 **          03/14/2018 mem - Use GetManagerParametersWork to lookup manager parameters, allowing for getting remote info parameters from parent groups
 **          03/29/2018 mem - Return an empty string if the manager does not have parameters RunJobsRemotely and RemoteHostName defined, or if RunJobsRemotely is false
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2201,8 +2202,6 @@ BEGIN
     -- Create the Temp Table to hold the manager parameters
     -----------------------------------------------
 
-    DROP TABLE IF EXISTS Tmp_Mgr_Params;
-
     CREATE TEMP TABLE Tmp_Mgr_Params (
         M_Name text NOT NULL,
         ParamName text NOT NULL,
@@ -2219,7 +2218,7 @@ BEGIN
     )
 
     -- Populate the temporary table with the manager parameters
-    Call GetManagerParametersWork _managerName, 0, 50
+    Call get_manager_parameters_work _managerName, 0, 50
 
     If Not Exists ( SELECT [Value] Then
                     FROM #Tmp_Mgr_Params;
@@ -2270,12 +2269,12 @@ BEGIN
               WHERE (ParamName = 'RemoteOrgDBPath' And M_Name = _managerName)
               UNION
               SELECT 7 AS Sort,
-                     '<privateKey>' || dbo.udfGetFilename([Value]) || '</privateKey>' AS [Value]
+                     '<privateKey>' || public.get_filename([Value]) || '</privateKey>' AS [Value]
               FROM Tmp_Mgr_Params
               WHERE (ParamName = 'RemoteHostPrivateKeyFile' And M_Name = _managerName)
               UNION
               SELECT 8 AS Sort,
-                     '<passphrase>' || dbo.udfGetFilename([Value]) || '</passphrase>' AS [Value]
+                     '<passphrase>' || public.get_filename([Value]) || '</passphrase>' AS [Value]
               FROM Tmp_Mgr_Params
               WHERE (ParamName = 'RemoteHostPassphraseFile' And M_Name = _managerName)
               ) SourceQ
@@ -2284,6 +2283,8 @@ BEGIN
 
 Done:
     Return _myError
+
+    DROP TABLE Tmp_Mgr_Params
 
 END
 $$;
@@ -2312,7 +2313,7 @@ AS $$
 **          08/10/2015 mem - Add _sortMode=3
 **          09/02/2016 mem - Increase the default for parameter _maxRecursion from 5 to 50
 **          03/14/2018 mem - Refactor actual parameter lookup into stored procedure GetManagerParametersWork
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2334,8 +2335,6 @@ BEGIN
     -- Create the Temp Table to hold the manager parameters
     -----------------------------------------------
 
-    DROP TABLE IF EXISTS Tmp_Mgr_Params;
-
     CREATE TEMP TABLE Tmp_Mgr_Params (
         M_Name text NOT NULL,
         ParamName text NOT NULL,
@@ -2352,7 +2351,7 @@ BEGIN
     )
 
     -- Populate the temporary table with the manager parameters
-    Call GetManagerParametersWork _managerNameList, _sortMode, _maxRecursion, _message => _message Output
+    Call get_manager_parameters_work _managerNameList, _sortMode, _maxRecursion, _message => _message Output
 
     -- Return the parameters as a result set
 
@@ -2385,6 +2384,8 @@ BEGIN
 Done:
     Return _myError
 
+    DROP TABLE Tmp_Mgr_Params
+
 END
 $$;
 
@@ -2411,7 +2412,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   03/14/2018 mem - Initial version (code refactored from GetManagerParameters)
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2421,8 +2422,6 @@ BEGIN
     -----------------------------------------------
     -- Create the Temp Table to hold the manager group information
     -----------------------------------------------
-
-    DROP TABLE IF EXISTS Tmp_Manager_Group_Info;
 
     CREATE TEMP TABLE Tmp_Manager_Group_Info (
         M_Name text NOT NULL,
@@ -2462,7 +2461,7 @@ BEGIN
            End As ParentParamPointerState,
            M_Name
     FROM V_ParamValue
-    WHERE (M_Name IN (Select Value From public.udf_parse_delimited_list(_managerNameList, ',')))
+    WHERE (M_Name IN (Select Value From public.parse_delimited_list(_managerNameList, ',')))
     --
     GET DIAGNOSTICS _myRowCount = ROW_COUNT;
 
@@ -2544,6 +2543,8 @@ BEGIN
 Done:
     Return _myError
 
+    DROP TABLE Tmp_Manager_Group_Info
+
 END
 $$;
 
@@ -2572,7 +2573,7 @@ AS $$
 **  Auth:   mem
 **  Date:   05/09/2008
 **          05/14/2015 mem - Update Insert query to explicitly list field Manager_Name
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2594,8 +2595,6 @@ BEGIN
     -- Creata a temporary table
     -----------------------------------------------
 
-    DROP TABLE IF EXISTS TmpMangerSpecList;
-
     CREATE TEMP TABLE TmpMangerSpecList (
         Entry_ID int PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         Manager_Name text NOT NULL
@@ -2611,7 +2610,7 @@ BEGIN
         -- Populate TmpMangerSpecList with the data in _managerNameList
         INSERT INTO TmpMangerSpecList (Manager_Name)
         SELECT Value
-        FROM public.udf_parse_delimited_list(_managerNameList, ',')
+        FROM public.parse_delimited_list(_managerNameList, ',')
         --
         GET DIAGNOSTICS _myRowCount = ROW_COUNT;
 
@@ -2708,12 +2707,25 @@ BEGIN
 
     Return _myError
 
+    DROP TABLE TmpMangerSpecList
+
 END
 $$;
 
 COMMENT ON PROCEDURE mc.parse_manager_name_list IS 'ParseManagerNameList';
 
-CREATE OR REPLACE PROCEDURE mc.post_log_entry()
+CREATE OR REPLACE PROCEDURE mc.post_log_entry
+(
+    VALUES ( _postedBy, GETDATE(), _type, _message)
+    --
+    if @@rowcount <> 1
+    begin
+    RAISERROR ('Update was unsuccessful for T_Log_Entries table', 10, 1)
+    return 51191
+    end
+    End
+    return 0
+)
 LANGUAGE plpgsql
 AS $$
 /****************************************************
@@ -2725,7 +2737,7 @@ AS $$
 **  Date:   10/31/2001
 **          02/17/2005 mem - Added parameter _duplicateEntryHoldoffHours
 **          05/31/2007 mem - Expanded the size of _type, _message, and _postedBy
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2746,17 +2758,6 @@ BEGIN
 
     If _duplicateRowCount = 0 Then
         INSERT INTO mc.t_log_entries
-            (posted_by, posting_time, type, message)
-        VALUES ( _postedBy, CURRENT_TIMESTAMP, _type, _message)
-        --
-        if @@rowcount <> 1 Then
-            RAISERROR ('Update was unsuccessful for mc.t_log_entries table', 10, 1)
-            return 51191
-        End If;
-    End If;
-
-    return 0
-
 END
 $$;
 
@@ -2783,7 +2784,7 @@ AS $$
 **          03/16/2006 mem - Now updating T_Usage_Stats
 **          03/17/2006 mem - Now populating Usage_Count in T_Usage_Log and changed _minimumUpdateInterval from 6 hours to 1 hour
 **          05/03/2009 mem - Removed parameter _dBName
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2866,7 +2867,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   09/10/2009 mem - Initial version
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -2940,7 +2941,7 @@ BEGIN
         End If;
     End If;
 
-    Call PostLogEntry _messageType, _message, 'ReportManagerErrorCleanup'
+    Call post_log_entry _messageType, _message, 'ReportManagerErrorCleanup'
 
     ---------------------------------------------------
     -- Lookup the value of ManagerErrorCleanupMode in mc.t_param_value
@@ -2975,7 +2976,7 @@ BEGIN
         End If;
     End If;
 
-    If LTrim(RTrim(_cleanupMode)) = '1' Then
+    If Trim(_cleanupMode) = '1' Then
         -- Manager is set to auto-cleanup only once; change 'ManagerErrorCleanupMode' to 0
         UPDATE mc.t_param_value
         SET value = '0'
@@ -3001,7 +3002,7 @@ BEGIN
 
         if _myError <> 0 Then
             _message := 'Error setting ManagerErrorCleanupMode to 0 in mc.t_param_value for manager ' || _managerName;
-            Call PostLogEntry 'Error', _message, 'ReportManagerErrorCleanup'
+            Call post_log_entry 'Error', _message, 'ReportManagerErrorCleanup'
         Else
             If _myRowCount = 0 Then
                 _message := _message || '; Entry not found in mc.t_param_value for ManagerErrorCleanupMode; this is unexpected';
@@ -3045,7 +3046,7 @@ AS $$
 **  Date:   09/10/2009 mem - Initial version
 **          09/29/2014 mem - Expanded _managerList to varchar(max) and added parameters _showTable and _infoOnly
 **                         - Fixed where clause bug in final update query
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3072,8 +3073,6 @@ BEGIN
         _cleanupMode := 2;
     End If;
 
-    DROP TABLE IF EXISTS TmpManagerList;
-
     CREATE TEMP TABLE TmpManagerList (
         ManagerName text NOT NULL,
         MgrID int NULL
@@ -3087,7 +3086,7 @@ BEGIN
         INSERT INTO #TmpManagerList (ManagerName);
     End If;
         SELECT Value
-        FROM public.udf_parse_delimited_list(_managerList, ',')
+        FROM public.parse_delimited_list(_managerList, ',')
         WHERE char_length(Coalesce(Value, '')) > 0
     Else
         INSERT INTO TmpManagerList (ManagerName)
@@ -3235,6 +3234,7 @@ BEGIN
     ---------------------------------------------------
 Done:
     return _myError
+    DROP TABLE TmpManagerList
 
 END
 $$;
@@ -3258,7 +3258,7 @@ AS $$
 **  Auth:   mem
 **  Date:   01/24/2009 mem - Initial version
 **          04/17/2014 mem - Expanded _managerList to varchar(max) and added parameter _showTable
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3268,8 +3268,6 @@ DECLARE
 BEGIN
     _showTable := Coalesce(_showTable, 0);
     _message := '';
-
-    DROP TABLE IF EXISTS TmpManagerList;
 
     CREATE TEMP TABLE TmpManagerList (
         ManagerName text NOT NULL,
@@ -3286,7 +3284,7 @@ BEGIN
         INSERT INTO #TmpManagerList (ManagerName);
     End If;
         SELECT Value
-        FROM public.udf_parse_delimited_list(_managerList, ',')
+        FROM public.parse_delimited_list(_managerList, ',')
         WHERE char_length(Coalesce(Value, '')) > 0
     Else
         INSERT INTO TmpManagerList (ManagerName)
@@ -3418,6 +3416,8 @@ BEGIN
 Done:
     return _myError
 
+    DROP TABLE TmpManagerList
+
 END
 $$;
 
@@ -3445,13 +3445,15 @@ AS $$
 **  Auth:   mem
 **  Date:   02/25/2016 mem - Initial version
 **          04/22/2016 mem - Now updating M_Comment in T_Mgrs
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
     _myRowCount int := 0;
     _moveParams text := 'Move params transaction';
 BEGIN
+    Set XACT_ABORT, NoCount On
+
     ---------------------------------------------------
     -- Validate the inputs
     ---------------------------------------------------
@@ -3465,8 +3467,6 @@ BEGIN
         _enableControlFromWebsite := 1;
     End If;
 
-    DROP TABLE IF EXISTS TmpManagerList;
-
     CREATE TEMP TABLE TmpManagerList (
         Manager_Name text NOT NULL,
         M_ID int NULL
@@ -3477,7 +3477,7 @@ BEGIN
     ---------------------------------------------------
     --
 
-    Call ParseManagerNameList _mgrList, _removeUnknownManagers => 0
+    Call parse_manager_name_list _mgrList, _removeUnknownManagers => 0
 
     If Not Exists (Select * from TmpManagerList) Then
         _message := '_mgrList was empty';
@@ -3693,6 +3693,7 @@ BEGIN
 
 Done:
     RETURN _myError
+    DROP TABLE TmpManagerList
 
 END
 $$;
@@ -3730,7 +3731,7 @@ AS $$
 **          04/29/2015 mem - Now parsing _managerIDList using udfParseDelimitedIntegerList
 **                         - Added parameter _infoOnly
 **                         - Renamed the first parameter from _paramValue to _paramName
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3750,15 +3751,11 @@ BEGIN
     -- Create a temporary table that will hold the entry_id
     -- values that need to be updated in mc.t_param_value
     ---------------------------------------------------
-    DROP TABLE IF EXISTS TmpParamValueEntriesToUpdate;
-
     CREATE TEMP TABLE TmpParamValueEntriesToUpdate (
         EntryID int NOT NULL
     )
 
     CREATE UNIQUE CLUSTERED INDEX IX_TmpParamValueEntriesToUpdate ON TmpParamValueEntriesToUpdate (EntryID)
-
-    DROP TABLE IF EXISTS TmpMgrIDs;
 
     CREATE TEMP TABLE TmpMgrIDs (
         MgrID text NOT NULL
@@ -3789,7 +3786,7 @@ BEGIN
     --
     INSERT INTO TmpMgrIDs (MgrID)
     SELECT Cast(Value as text)
-    FROM public.udf_parse_delimited_integer_list ( _managerIDList, ',' )
+    FROM public.parse_delimited_integer_list ( _managerIDList, ',' )
 
     If _infoOnly <> 0 Then
 
@@ -3809,12 +3806,12 @@ BEGIN
                   PV.type_id = _paramTypeID
         WHERE control_from_website > 0
         UNION
-        SELECT NULL AS entry_id,
+        SELECT NULL AS Entry_ID,
                M.mgr_id,
                M.mgr_name,
                _paramName,
                _paramTypeID,
-               NULL AS "value",
+               NULL AS "Value",
                _newValue AS NewValue,
                'New'
         FROM mc.t_mgrs M
@@ -3876,14 +3873,16 @@ BEGIN
 
         ---------------------------------------------------
         -- Call UpdateSingleMgrParamWork to perform the update, then call
-        -- AlterEnteredByUserMultiID and AlterEventLogEntryUserMultiID for _callingUser
+        -- public.alter_entered_by_user_multi_id and public.alter_event_log_entry_user_multi_id for _callingUser
         ---------------------------------------------------
         --
-        Call UpdateSingleMgrParamWork _paramName, _newValue, _callingUser
+        Call update_single_mgr_param_work _paramName, _newValue, _callingUser
 
     End If;
 
     return _myError
+    DROP TABLE TmpParamValueEntriesToUpdate
+    DROP TABLE TmpMgrIDs
 
 END
 $$;
@@ -3913,7 +3912,7 @@ AS $$
 **
 **  Auth:   mem
 **  Date:   04/16/2009
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -3973,27 +3972,25 @@ BEGIN
         -- Create a temporary table that will hold the entry_id
         -- values that need to be updated in mc.t_param_value
         ---------------------------------------------------
-        DROP TABLE IF EXISTS TmpIDUpdateList;
-
         CREATE TEMP TABLE TmpIDUpdateList (
             TargetID int NOT NULL
         )
 
         CREATE UNIQUE CLUSTERED INDEX IX_TmpIDUpdateList ON TmpIDUpdateList (TargetID)
 
-        -- Populate TmpIDUpdateList with entry_id values for mc.t_param_value, then call AlterEnteredByUserMultiID
+        -- Populate TmpIDUpdateList with entry_id values for mc.t_param_value, then call public.alter_entered_by_user_multi_id
         --
         INSERT INTO TmpIDUpdateList (TargetID)
         SELECT EntryID
         FROM TmpParamValueEntriesToUpdate
 
-        Call AlterEnteredByUserMultiID 'mc.t_param_value', 'entry_id', _callingUser, _entryDateColumnName => 'last_affected'
+        Call alter_entered_by_user_multi_id 'mc.t_param_value', 'entry_id', _callingUser, _entryDateColumnName => 'last_affected'
 
         If _paramName = 'mgractive' or _paramID = 17 Then
             -- Triggers trig_i_T_ParamValue and trig_u_T_ParamValue make an entry in
             --  mc.t_event_log whenever mgractive (param TypeID = 17) is changed
 
-            -- Call AlterEventLogEntryUserMultiID
+            -- Call public.alter_event_log_entry_user_multi_id
             -- to alter the entered_by field in mc.t_event_log
 
             If _newValue = 'True' Then
@@ -4002,7 +3999,7 @@ BEGIN
                 _targetState := 0;
             End If;
 
-            -- Populate TmpIDUpdateList with Manager ID values, then call AlterEventLogEntryUserMultiID
+            -- Populate TmpIDUpdateList with Manager ID values, then call public.alter_event_log_entry_user_multi_id
             Truncate Table TmpIDUpdateList
 
             INSERT INTO TmpIDUpdateList (TargetID)
@@ -4010,12 +4007,13 @@ BEGIN
             FROM mc.t_param_value
             WHERE entry_id IN (SELECT EntryID FROM TmpParamValueEntriesToUpdate)
 
-            Call AlterEventLogEntryUserMultiID 1, _targetState, _callingUser
+            Call alter_event_log_entry_user_multi_id 1, _targetState, _callingUser
         End If;
 
     End If;
 
     Return _myError
+    DROP TABLE TmpIDUpdateList
 
 END
 $$;
@@ -4046,7 +4044,7 @@ AS $$
 **          07/31/2007 grk - changed for 'controlfromwebsite' no longer a parameter
 **          03/30/2009 mem - Added optional parameter _callingUser; if provided, then will call AlterEnteredByUserMultiID and possibly AlterEventLogEntryUserMultiID
 **          04/16/2009 mem - Now calling UpdateSingleMgrParamWork to perform the updates
-**          04/07/2022 mem - Ported to PostgreSQL
+**          09/21/2022 mem - Ported to PostgreSQL
 **
 *****************************************************/
 DECLARE
@@ -4056,8 +4054,6 @@ BEGIN
     -- Create a temporary table that will hold the entry_id
     -- values that need to be updated in mc.t_param_value
     ---------------------------------------------------
-    DROP TABLE IF EXISTS TmpParamValueEntriesToUpdate;
-
     CREATE TEMP TABLE TmpParamValueEntriesToUpdate (
         EntryID int NOT NULL
     )
@@ -4077,7 +4073,7 @@ BEGIN
            ON mgr_id = mgr_id
     WHERE param_name = _paramValue AND
           mgr_type_id IN ( SELECT Item
-                        FROM public.udf_parse_delimited_list ( _managerTypeIDList )
+                        FROM public.parse_delimited_list ( _managerTypeIDList )
                       ) AND
           mgr_id IN ( SELECT mgr_id
                      FROM mc.t_mgrs
@@ -4093,12 +4089,13 @@ BEGIN
 
     ---------------------------------------------------
     -- Call UpdateSingleMgrParamWork to perform the update, then call
-    -- AlterEnteredByUserMultiID and AlterEventLogEntryUserMultiID for _callingUser
+    -- public.alter_entered_by_user_multi_id and public.alter_event_log_entry_user_multi_id for _callingUser
     ---------------------------------------------------
     --
-    Call UpdateSingleMgrParamWork _paramValue, _newValue, _callingUser
+    Call update_single_mgr_param_work _paramValue, _newValue, _callingUser
 
     return _myError
+    DROP TABLE TmpParamValueEntriesToUpdate
 
 END
 $$;
