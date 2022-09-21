@@ -209,6 +209,32 @@ namespace SQLServer_Stored_Procedure_Converter
             AppendLine(procedureBody, leadingWhitespace + dataLine.Substring(commentIndex));
         }
 
+        private void AppendProcedureToWriter(
+            StreamWriter writer,
+            StoredProcedureDDL storedProcedureInfo,
+            Dictionary<string, WordReplacer> tableNameMap,
+            Dictionary<string, Dictionary<string, WordReplacer>> columnNameMap,
+            bool updateSchemaOnTables)
+        {
+            var procedureNameWithoutSchema = StoredProcedureDDL.GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
+
+            if (mOptions.StoredProcedureNamesToSkip.Contains(procedureNameWithoutSchema))
+            {
+                OnStatusEvent("Skipping " + storedProcedureInfo.ProcedureName);
+                return;
+            }
+
+            // Write out the previous procedure (or function)
+            if (storedProcedureInfo.IsFunction)
+                OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
+            else
+                OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
+
+            UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap, updateSchemaOnTables);
+
+            storedProcedureInfo.ToWriterForPostgres(writer);
+        }
+
         /// <summary>
         /// Convert the object name to snake_case
         /// </summary>
@@ -590,23 +616,7 @@ namespace SQLServer_Stored_Procedure_Converter
                     {
                         if (!string.IsNullOrWhiteSpace(storedProcedureInfo.ProcedureName))
                         {
-                            var procedureNameWithoutSchema = StoredProcedureDDL.GetNameWithoutSchema(storedProcedureInfo.ProcedureName);
-                            if (mOptions.StoredProcedureNamesToSkip.Contains(procedureNameWithoutSchema))
-                            {
-                                OnStatusEvent("Skipping " + storedProcedureInfo.ProcedureName);
-                            }
-                            else
-                            {
-                                if (storedProcedureInfo.IsFunction)
-                                    OnStatusEvent("Writing function " + storedProcedureInfo.ProcedureName);
-                                else
-                                    OnStatusEvent("Writing stored procedure " + storedProcedureInfo.ProcedureName);
-
-                                UpdateTableAndColumnNames(storedProcedureInfo.ProcedureBody, tableNameMap, columnNameMap, updateSchemaOnTables);
-
-                                // Write out the previous procedure (or function)
-                                storedProcedureInfo.ToWriterForPostgres(writer);
-                            }
+                            AppendProcedureToWriter(writer, storedProcedureInfo, tableNameMap, columnNameMap, updateSchemaOnTables);
                         }
 
                         // Reset the tracking variables
@@ -1171,8 +1181,7 @@ namespace SQLServer_Stored_Procedure_Converter
                     UpdateAndAppendLine(storedProcedureInfo.ProcedureBody, dataLine);
                 }
 
-                // Write out the previous procedure (or function)
-                storedProcedureInfo.ToWriterForPostgres(writer);
+                AppendProcedureToWriter(writer, storedProcedureInfo, tableNameMap, columnNameMap, updateSchemaOnTables);
 
                 return true;
             }
