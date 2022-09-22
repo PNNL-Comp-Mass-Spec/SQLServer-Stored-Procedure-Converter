@@ -835,6 +835,17 @@ namespace SQLServer_Stored_Procedure_Converter
 
                     dataLine = ReplaceText(dataLine, "(dbo.)*AppendToText", "public.append_to_text");
 
+                    if (dataLine.IndexOf("identity_insert", StringComparison.OrdinalIgnoreCase) >= 0 && dataLine.IndexOf("Off", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        var whitespace = GetLeadingWhitespace(dataLine);
+
+                        AppendLine(storedProcedureInfo.ProcedureBody, string.Format("{0}-- Use OVERRIDING SYSTEM VALUE to insert an explicit value for the identity column, for example:", whitespace));
+                        AppendLine(storedProcedureInfo.ProcedureBody, string.Format("{0}--", whitespace));
+                        AppendLine(storedProcedureInfo.ProcedureBody, string.Format("{0}-- INSERT INTO mc.t_log_entries (entry_id, posted_by, posting_time, type, message)", whitespace));
+                        AppendLine(storedProcedureInfo.ProcedureBody, string.Format("{0}-- OVERRIDING SYSTEM VALUE", whitespace));
+                        AppendLine(storedProcedureInfo.ProcedureBody, string.Format("{0}-- VALUES (12345, 'Test', CURRENT_TIMESTAMP, 'Test', 'Message');", whitespace));
+                    }
+
                     var declareAndAssignMatch = declareAndAssignMatcher.Match(dataLine);
                     if (declareAndAssignMatch.Success)
                     {
