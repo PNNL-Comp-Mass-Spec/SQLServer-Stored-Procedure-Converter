@@ -1087,13 +1087,13 @@ namespace SQLServer_Stored_Procedure_Converter
 
                                 var loopComment = new StringBuilder();
                                 loopComment.AppendFormat("{0}-- This While loop can probably be converted to a For loop; for example:", whiteSpace).AppendLine();
-                                loopComment.AppendFormat("{0}--    For _itemName In", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--    FOR _itemName IN", whiteSpace).AppendLine();
                                 loopComment.AppendFormat("{0}--        SELECT item_name", whiteSpace).AppendLine();
                                 loopComment.AppendFormat("{0}--        FROM TmpSourceTable", whiteSpace).AppendLine();
                                 loopComment.AppendFormat("{0}--        ORDER BY entry_id", whiteSpace).AppendLine();
-                                loopComment.AppendFormat("{0}--    Loop", whiteSpace).AppendLine();
+                                loopComment.AppendFormat("{0}--    LOOP", whiteSpace).AppendLine();
                                 loopComment.AppendFormat("{0}--        ...", whiteSpace).AppendLine();
-                                loopComment.AppendFormat("{0}--    End Loop", whiteSpace).AppendLine().AppendLine();
+                                loopComment.AppendFormat("{0}--    END LOOP;", whiteSpace).AppendLine().AppendLine();
 
                                 AppendLine(storedProcedureInfo.ProcedureBody, loopComment.ToString());
                                 storedProcedureInfo.ProcedureBody.Add(string.Empty);
