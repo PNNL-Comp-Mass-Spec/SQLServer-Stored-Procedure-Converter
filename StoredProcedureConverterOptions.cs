@@ -8,10 +8,12 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     public class StoredProcedureConverterOptions
     {
+        // Ignore Spelling: App, Postgres
+
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "October 27, 2022";
+        public const string PROGRAM_DATE = "April 22, 2024";
 
         [Option("StoredProcFile", "Input", "I", ArgPosition = 1, Required = true,
             HelpShowsDefault = false, IsInputFilePath = true,

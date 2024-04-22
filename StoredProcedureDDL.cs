@@ -7,7 +7,7 @@ namespace SQLServer_Stored_Procedure_Converter
 {
     internal class StoredProcedureDDL
     {
-        // Ignore Spelling: auth, citext, plpgsql, udf
+        // Ignore Spelling: auth, citext, plpgsql, Postgres, udf
 
         private readonly StoredProcedureConverter mProcedureConverter;
 
