@@ -13,7 +13,7 @@ namespace SQLServer_Stored_Procedure_Converter
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "April 22, 2024";
+        public const string PROGRAM_DATE = "June 22, 2024";
 
         [Option("StoredProcFile", "Input", "I", ArgPosition = 1, Required = true,
             HelpShowsDefault = false, IsInputFilePath = true,
